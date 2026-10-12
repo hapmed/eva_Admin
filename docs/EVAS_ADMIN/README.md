@@ -2,7 +2,7 @@
 
 **Producto:** EVAS Admin (panel de administración de HAPMED)
 **Repositorio:** <https://github.com/hapmed/eva_Admin>
-**Estado:** Documentación inicial (Fase 0 completada). Sin código de aplicación todavía.
+**Estado:** Especificación vigente. Fases 0-1 completadas; esqueleto de Fase 2 implementado (backend, frontend y agente en modo simulado).
 **Última actualización:** 2026-10-11
 
 > Esta carpeta contiene la especificación funcional y técnica que guiará el

@@ -1,6 +1,7 @@
 # ARCHITECTURE.md — Arquitectura de EVAS Admin
 
-**Estado:** Aprobada en Fase 1. Decisiones clave cerradas
+**Estado:** Aprobada en Fase 1. Estructura base implementada en Fase 2
+(backend, frontend y agente en modo `simulated`). Decisiones clave cerradas
 (ver [`DECISIONS.md`](./DECISIONS.md)).
 **Documentos relacionados:** [`DATA_MODEL.md`](./DATA_MODEL.md),
 [`API_CONTRACTS.md`](./API_CONTRACTS.md), [`SECURITY.md`](./SECURITY.md),
@@ -130,48 +131,52 @@ backend/
 └─ Dockerfile
 ```
 
-### 4.2 Frontend (propuesta)
+### 4.2 Frontend (implementado en Fase 2)
+
+SvelteKit 3 con la configuración en `vite.config.ts` (sin `svelte.config.js`),
+Tailwind CSS v4 (`@tailwindcss/vite`) y `@sveltejs/adapter-node`. El alias de
+`src/lib` es `#lib` (definido en `package.json#imports`).
 
 ```
 frontend/
 ├─ src/
+│  ├─ app.css                # Tailwind v4 + tokens de marca (claro/oscuro)
+│  ├─ app.html
 │  ├─ lib/
-│  │  ├─ api/                # Cliente HTTP tipado
-│  │  ├─ components/         # Tablas, filtros, diálogos, estados
-│  │  ├─ stores/             # Estado de sesión y UI
-│  │  └─ styles/             # Tailwind y tokens
-│  ├─ routes/
-│  │  ├─ (auth)/
-│  │  ├─ dashboard/
-│  │  ├─ clientes/
-│  │  ├─ usuarios/
-│  │  ├─ evas/
-│  │  ├─ suscripciones/
-│  │  ├─ instalaciones/
-│  │  ├─ dominios/
-│  │  ├─ bases-de-datos/
-│  │  ├─ monitoreo/
-│  │  └─ auditoria/
-├─ static/
-├─ svelte.config.js
-├─ tailwind.config.js
+│  │  ├─ api/client.ts       # Cliente HTTP tipado
+│  │  ├─ components/         # Button, StatusBadge, EmptyState, PageHeader,
+│  │  │                      #   DataTable, ThemeToggle, NavList
+│  │  └─ nav.ts              # Definición de navegación
+│  └─ routes/
+│     ├─ +layout.svelte      # Shell con barra lateral adaptable
+│     ├─ +page.svelte        # Dashboard
+│     ├─ clientes/ usuarios/ evas/ suscripciones/
+│     ├─ instalaciones/ dominios/ bases-de-datos/
+│     ├─ monitoreo/ auditoria/ alertas/
+│     ├─ login/
+│     └─ sin-permisos/
+├─ static/brand/             # Activos de marca servidos
+├─ vite.config.ts            # Kit + Tailwind + adapter-node
+├─ package.json
 └─ Dockerfile
 ```
 
-### 4.3 Agente de Operaciones (propuesta)
+### 4.3 Agente de Operaciones (implementado en Fase 2, modo simulado)
 
 ```
 agent/
 ├─ app/
-│  ├─ main.py             # Servicio HTTP mínimo
-│  ├─ config.py           # Modo simulated/real, credenciales Docker, token
-│  ├─ auth.py             # Verificación token/mTLS del backend
-│  ├─ operations/         # Handlers tipados (deploy, upgrade, restart, ...)
+│  ├─ main.py             # Servicio HTTP (FastAPI)
+│  ├─ config.py           # Modo simulated/real + token
+│  ├─ auth.py             # Verificación de token (fail-closed)
+│  ├─ operations.py       # Operaciones tipadas + validación de parámetros
 │  ├─ drivers/
-│  │  ├─ docker_client.py # Acceso acotado a Docker (labels evas.managed_by)
-│  │  └─ simulated.py     # Driver simulado (local/MVP)
-│  └─ audit.py            # Registro de operaciones
+│  │  ├─ base.py          # Interfaz y selección de driver
+│  │  ├─ simulated.py     # Driver simulado (Fase 2)
+│  │  └─ docker.py        # Driver real (deshabilitado en Fase 2)
+│  └─ audit.py            # Registro de operaciones (saneado)
 ├─ tests/
+├─ pyproject.toml
 └─ Dockerfile
 ```
 

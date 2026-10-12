@@ -196,12 +196,12 @@ flowchart TD
 
 ### 7.1 Librería de iconos
 
-**Decisión:** **Lucide** (`lucide-svelte`) como equivalente web de SF Symbols.
+**Decisión:** **Lucide** (`@lucide/svelte`) como equivalente web de SF Symbols.
 
 | Criterio | Por qué Lucide |
 |----------|----------------|
 | Estilo | Trazo único, uniforme, geométrico — coherente con HIG/SF Symbols. |
-| Integración | Paquete nativo Svelte (`lucide-svelte`), componentes, tree-shaking. |
+| Integración | Paquete nativo Svelte (`@lucide/svelte`), componentes, tree-shaking. |
 | Licencia | ISC/open source, uso comercial sin fricción. |
 | Tamaño/color | Heredan `currentColor` y tamaño por props; encajan con tokens. |
 | Cobertura | Amplia y con nombres estables (evita SVG sueltos). |
@@ -274,12 +274,12 @@ La mascota es el elemento central de la **bienvenida**:
   inicial) y un conmutador de tema persistente.
 - `--brand-gradient` para el elemento firma (botón primario, marca).
 - Materiales `backdrop-filter` con prueba de rendimiento y fallback.
-- Iconos vía `lucide-svelte`; componentes accesibles con elementos nativos + ARIA.
+- Iconos vía `@lucide/svelte`; componentes accesibles con elementos nativos + ARIA.
 
 ## 12. Decisiones resueltas
 
 1. **Valores:** exactos, tomados del manual del sitio (no propuestas). Ver §2/§3.
-2. **Iconos:** Lucide (`lucide-svelte`) — ver §7.1 y ADR-018.
+2. **Iconos:** Lucide (`@lucide/svelte`) — ver §7.1 y ADR-018.
 3. **Tema:** claro **y** oscuro — ver §2.2 y ADR-015.
 4. **Navegación:** barra lateral adaptable — ver §6.1 y ADR-016.
 5. **Mascota:** presente en onboarding — ver §1.1/§8 y ADR-017.

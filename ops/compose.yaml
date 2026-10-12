@@ -1,0 +1,48 @@
+# EVAS Admin — Compose de la aplicación.
+#
+# IMPORTANTE: NO declara ningún servicio PostgreSQL.
+# El PostgreSQL existente es externo y NO se gestiona desde este archivo.
+# Ver docs/EVAS_ADMIN/POSTGRES_EXISTING_INSTANCE.md y DECISIONS.md (ADR-004).
+
+name: evas-admin
+
+services:
+  api:
+    build: ../backend
+    env_file: [../.env]
+    networks: [evas_admin_net]
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request;urllib.request.urlopen('http://localhost:8000/healthz')"
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    # Sin puertos publicados por defecto: se expone vía Cloudflare Tunnel/proxy.
+
+  web:
+    build: ../frontend
+    env_file: [../.env]
+    environment:
+      PORT: "3000"
+      HOST: "0.0.0.0"
+    networks: [evas_admin_net]
+    depends_on: [api]
+    restart: unless-stopped
+
+  agent:
+    build: ../agent
+    env_file: [../.env]
+    networks: [evas_admin_net]
+    restart: unless-stopped
+    # Modo simulated por defecto. En modo real, montar el socket Docker SÓLO aquí,
+    # con permisos mínimos y tras revisión de seguridad (ADR-007).
+
+networks:
+  evas_admin_net:
+    driver: bridge

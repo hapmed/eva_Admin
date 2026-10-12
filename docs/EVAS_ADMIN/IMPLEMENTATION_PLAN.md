@@ -11,7 +11,7 @@ de la siguiente.
 |------|--------|--------|--------|
 | 0 | Documentación de especificación | `00_*` | **Completada (este entregable)** |
 | 1 | Arquitectura y plan detallado | `01_*` | **Completada** |
-| 2 | Diseño responsive y estructura base | `02_*` | Pendiente |
+| 2 | Diseño responsive y estructura base | `02_*` | **Completada** |
 | 3 | Usuarios, clientes, productos y suscripciones | `03_*` | Pendiente |
 | 4 | Instalaciones, dominios y bases de datos | `04_*` | Pendiente |
 | 5 | Monitoreo Docker y actualizaciones | `05_*` | Pendiente |
@@ -50,24 +50,29 @@ de la siguiente.
 **Pendiente de insumo:** instancia PostgreSQL existente
 ([`POSTGRES_EXISTING_INSTANCE.md`](./POSTGRES_EXISTING_INSTANCE.md)).
 
-## 4. Fase 2 — Diseño y estructura base
+## 4. Fase 2 — Diseño y estructura base (completada)
 
 **Objetivo:** esqueleto de frontend y backend que arranca sin tocar
 infraestructura real.
 
-**Frontend:** SvelteKit+TS, Tailwind, tokens de marca (Apple HIG), componentes
-base, navegación adaptable (barra lateral/pestañas), estados de UI,
+**Frontend:** SvelteKit 3 + TS + Tailwind v4, tokens de marca (Apple HIG),
+componentes base, navegación adaptable (barra lateral/pestañas), estados de UI,
 accesibilidad y tema claro/oscuro.
 **Backend:** FastAPI modular, config por entorno, esquema SQLAlchemy y Alembic
 configurado (sin migrar a prod), `/healthz` y `/readyz`, OpenAPI, `.env.example`.
-**Agente:** esqueleto del servicio `agent/` en modo `simulated`, con contrato de
-operaciones tipadas y autenticación (token) — aún sin tocar Docker real.
+**Agente:** servicio `agent/` en modo `simulated`, contrato de operaciones
+tipadas y autenticación por token — sin tocar Docker real.
 
 **Criterios de aceptación:**
-- Proyecto (web, api, agente simulado) arranca en local.
-- Lint, typecheck y pruebas en verde (reportar resultados reales).
-- **No** se conecta a Docker real ni se modifica PostgreSQL existente.
-- README actualizado.
+- [x] Proyecto (web, api, agente simulado) construye/arranca en local.
+- [x] Lint, typecheck y pruebas en verde (resultados reales abajo).
+- [x] **No** se conecta a Docker real ni se modifica PostgreSQL existente.
+- [x] README actualizado.
+
+**Resultados verificados (Fase 2):**
+- Backend: `ruff` limpio, `mypy` limpio, `pytest` 14/14.
+- Agente: `ruff` limpio, `mypy` limpio, `pytest` 11/11.
+- Frontend: `svelte-check` 0 errores, `prettier --check` OK, `vite build` OK.
 
 ## 5. Fase 3 — Usuarios, clientes, productos y suscripciones
 
