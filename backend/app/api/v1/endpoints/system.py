@@ -12,9 +12,7 @@ router = APIRouter(tags=["system"])
 
 
 @router.get("/system", response_model=SystemStats)
-def system_stats(
-    _: AuthContext = Depends(get_auth_context), db: Session = Depends(get_db)
-) -> dict:
+def system_stats(_: AuthContext = Depends(get_auth_context), db: Session = Depends(get_db)) -> dict:
     try:
         return get_agent().get_host_stats()
     except Exception:  # noqa: BLE001 - no romper el dashboard si el agente falla

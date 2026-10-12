@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     # Sólo usado en modo real (no en Fase 2).
     docker_host: str = "unix:///var/run/docker.sock"
     managed_label: str = "evas.managed_by"
+    eva_network: str = "apps-net"
     # Rutas del host montadas de solo lectura para métricas del servidor.
     host_proc: str = "/host/proc"
     host_root: str = "/host"

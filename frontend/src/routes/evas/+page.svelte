@@ -21,7 +21,14 @@
 	let showCreate = $state(false);
 	let saving = $state(false);
 	let formError = $state<string | null>(null);
-	let form = $state({ code: '', name: '', description: '' });
+	let form = $state({
+		code: '',
+		name: '',
+		description: '',
+		image_repo: '',
+		container_port: 8000,
+		healthcheck_path: '/healthz'
+	});
 
 	let versionFor = $state<Eva | null>(null);
 	let versionOpen = $state(false);
@@ -55,7 +62,14 @@
 			const created = await api.post<Eva>('/evas', form);
 			evas = [...evas, { ...created, versions: created.versions ?? [] }];
 			showCreate = false;
-			form = { code: '', name: '', description: '' };
+			form = {
+				code: '',
+				name: '',
+				description: '',
+				image_repo: '',
+				container_port: 8000,
+				healthcheck_path: '/healthz'
+			};
 		} catch (err) {
 			formError = err instanceof ApiError ? err.message : 'Error al crear la EVA';
 		} finally {
@@ -140,6 +154,24 @@
 			<span>Descripción</span>
 			<input class={inputClass} bind:value={form.description} />
 		</label>
+		<label class="flex flex-col gap-1">
+			<span>Imagen Docker (repositorio, sin tag)</span>
+			<input
+				class={inputClass}
+				bind:value={form.image_repo}
+				placeholder="ghcr.io/hapmed/eva-mi-app"
+			/>
+		</label>
+		<div class="grid grid-cols-2 gap-3">
+			<label class="flex flex-col gap-1">
+				<span>Puerto interno</span>
+				<input type="number" class={inputClass} bind:value={form.container_port} />
+			</label>
+			<label class="flex flex-col gap-1">
+				<span>Ruta de salud</span>
+				<input class={inputClass} bind:value={form.healthcheck_path} placeholder="/healthz" />
+			</label>
+		</div>
 		{#if formError}
 			<p class="text-[13px] text-danger" role="alert">{formError}</p>
 		{/if}

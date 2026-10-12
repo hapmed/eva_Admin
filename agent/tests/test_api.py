@@ -28,14 +28,14 @@ def test_operation_requires_token(client_with_token):
     assert response.status_code == 401
 
 
-def test_operation_with_token_is_simulated(client_with_token):
+def test_deploy_with_token_is_simulated(client_with_token):
     response = client_with_token.post(
         "/v1/operations",
         headers={"Authorization": "Bearer test-token"},
         json={
-            "type": "upgrade_installation",
+            "type": "deploy_installation",
             "installation_id": "i1",
-            "params": {"target_version": "1.5.0"},
+            "params": {"image": "x:1.0.0", "name": "eva_alfa", "host_port": 9100},
         },
     )
     assert response.status_code == 200
@@ -48,7 +48,7 @@ def test_operation_missing_param(client_with_token):
     response = client_with_token.post(
         "/v1/operations",
         headers={"Authorization": "Bearer test-token"},
-        json={"type": "upgrade_installation", "installation_id": "i1", "params": {}},
+        json={"type": "deploy_installation", "installation_id": "i1", "params": {"image": "x:1"}},
     )
     assert response.status_code == 422
 

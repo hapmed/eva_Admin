@@ -43,10 +43,7 @@ def build_digest(alerts: list[dict]) -> tuple[str, str]:
     if not open_alerts:
         return "", ""
     subject = f"[EVAS Admin] {len(open_alerts)} alerta(s) abierta(s)"
-    lines = [
-        f"- [{alert['severity']}] {alert['message']} ({alert['type']})"
-        for alert in open_alerts
-    ]
+    lines = [f"- [{alert['severity']}] {alert['message']} ({alert['type']})" for alert in open_alerts]
     body = "Alertas abiertas en EVAS Admin:\n\n" + "\n".join(lines) + "\n"
     return subject, body
 

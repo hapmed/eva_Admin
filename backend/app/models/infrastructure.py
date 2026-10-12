@@ -8,7 +8,7 @@ referencian por metadatos y los secretos por su ubicación (`SECRET_REFERENCE`).
 import uuid
 from datetime import datetime
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, String, UniqueConstraint, func
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -36,6 +36,9 @@ class Installation(IdMixin, TimestampMixin, Base):
     desired_version: Mapped[str] = mapped_column(String(40), default="")
     installed_version: Mapped[str | None] = mapped_column(String(40), nullable=True)
     last_operation_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Aprovisionamiento real: puerto del host (solo 127.0.0.1) y nombre del contenedor.
+    host_port: Mapped[int | None] = mapped_column(Integer, nullable=True, unique=True)
+    container_name: Mapped[str] = mapped_column(String(160), default="")
 
     services: Mapped[list["InstallationService"]] = relationship(
         back_populates="installation", cascade="all, delete-orphan"

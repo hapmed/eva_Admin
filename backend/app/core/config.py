@@ -68,6 +68,24 @@ class Settings(BaseSettings):
     smtp_starttls: bool = True
     smtp_ssl: bool = False
 
+    # Aprovisionamiento real (bases de datos por cliente, contenedores, DNS).
+    provision_enabled: bool = False
+    provision_db_host: str = "postgres"
+    provision_db_port: int = 5432
+    provision_db_admin_user: str = ""
+    provision_db_admin_password: str = ""
+    provision_db_admin_db: str = "postgres"
+    provision_user_prefix: str = "eva"
+    port_range_start: int = 9100
+    port_range_end: int = 9199
+    eva_network: str = "apps-net"
+    # Cloudflare (túnel + DNS) para publicar el dominio del cliente.
+    public_domain_suffix: str = "hapmed.qzz.io"
+    cloudflare_api_token: str = ""
+    cloudflare_account_id: str = ""
+    cloudflare_zone_id: str = ""
+    cloudflare_tunnel_id: str = ""
+
     # Administrador inicial (bootstrap). Sólo se usa para crear el primer usuario.
     bootstrap_admin_email: str = ""
     bootstrap_admin_password: str = ""

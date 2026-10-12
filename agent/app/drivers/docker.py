@@ -1,9 +1,8 @@
 """Driver real de Docker (SDK de Docker).
 
 Solo opera sobre recursos **gestionados** por EVAS Admin (label
-`evas.managed_by=evas-admin`) y con operaciones tipadas. Las operaciones que
-requieren el manifiesto de despliegue (deploy/upgrade) o respaldo quedan
-explícitamente **no soportadas** hasta implementar ese flujo.
+`evas.managed_by=evas-admin`). Deploy/upgrade crean el contenedor de la EVA con
+un *spec* tipado; backup/restore quedan explícitamente no soportados.
 """
 
 from datetime import UTC, datetime
@@ -22,7 +21,60 @@ class RealDockerDriver:
         from app.config import get_settings
 
         self._settings = get_settings()
-        self._client = docker.DockerClient(base_url=self._settings.docker_host, timeout=30)
+        self._client = docker.DockerClient(base_url=self._settings.docker_host, timeout=60)
+
+    # --- Deploy / upgrade / remove ---
+
+    def _remove_by_name(self, name: str) -> None:
+        try:
+            container = self._client.containers.get(name)
+            container.remove(force=True)
+        except NotFound:
+            pass
+
+    def deploy_installation(self, spec: dict[str, Any]) -> dict[str, Any]:
+        name = str(spec["name"])
+        image = str(spec["image"])
+        network = str(spec.get("network") or self._settings.eva_network)
+        host_port = int(spec["host_port"])
+        container_port = int(spec.get("container_port", 8000))
+        environment = spec.get("env") or {}
+        labels = spec.get("labels") or {}
+
+        self._client.images.pull(image)
+        self._remove_by_name(name)
+
+        container = self._client.containers.create(
+            image=image,
+            name=name,
+            detach=True,
+            environment=environment,
+            labels=labels,
+            ports={f"{container_port}/tcp": ("127.0.0.1", host_port)},
+            network=network,
+            restart_policy={"Name": "unless-stopped"},
+        )
+        container.start()
+        return {
+            "simulated": False,
+            "name": name,
+            "image": image,
+            "container_id": container.id,
+            "host_port": host_port,
+        }
+
+    def upgrade_installation(self, spec: dict[str, Any]) -> dict[str, Any]:
+        return self.deploy_installation(spec)
+
+    def remove_installation(self, installation_id: str) -> dict[str, Any]:
+        containers = self._client.containers.list(all=True, filters=self._filters(installation_id))
+        removed = []
+        for container in containers:
+            container.remove(force=True)
+            removed.append(container.name)
+        return {"simulated": False, "installation_id": installation_id, "removed": removed}
+
+    # --- Consultas ---
 
     def _filters(self, installation_id: str) -> dict[str, list[str]]:
         return {
@@ -134,15 +186,7 @@ class RealDockerDriver:
             ],
         }
 
-    # --- Operaciones que requieren el manifiesto de despliegue ---
-    def deploy_installation(
-        self, installation_id: str, eva_version: str, domain: str | None
-    ) -> dict[str, Any]:
-        raise RuntimeError("deploy real no habilitado: requiere el manifiesto de despliegue")
-
-    def upgrade_installation(self, installation_id: str, target_version: str) -> dict[str, Any]:
-        raise RuntimeError("upgrade real no habilitado: requiere el manifiesto de despliegue")
-
+    # --- Respaldos (pendiente: flujo autorizado del host) ---
     def request_backup(self, database_ref: str) -> dict[str, Any]:
         raise RuntimeError("backup real no habilitado: usa el timer de respaldos del host")
 

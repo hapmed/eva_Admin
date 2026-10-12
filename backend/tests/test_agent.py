@@ -10,4 +10,5 @@ def test_operations_are_marked_simulated():
     agent = SimulatedAgent()
     assert agent.health_check("inst-1")["simulated"] is True
     assert agent.restart_service("inst-1", "web")["simulated"] is True
-    assert agent.upgrade_installation("inst-1", "1.5.0")["simulated"] is True
+    spec = {"image": "x:1.5.0", "name": "n", "host_port": 9100}
+    assert agent.upgrade_installation(spec)["simulated"] is True

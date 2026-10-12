@@ -29,6 +29,9 @@ def create_eva(db: Session, context: AuthContext, data: EvaCreate) -> EvaProduct
         name=data.name,
         description=data.description,
         config_schema=data.config_schema,
+        image_repo=data.image_repo,
+        container_port=data.container_port,
+        healthcheck_path=data.healthcheck_path,
     )
     db.add(eva)
     db.flush()
@@ -40,7 +43,15 @@ def create_eva(db: Session, context: AuthContext, data: EvaCreate) -> EvaProduct
 
 def update_eva(db: Session, context: AuthContext, eva_id: str, data: EvaUpdate) -> EvaProduct:
     eva = get_eva(db, eva_id)
-    for field in ("name", "description", "status", "config_schema"):
+    for field in (
+        "name",
+        "description",
+        "status",
+        "config_schema",
+        "image_repo",
+        "container_port",
+        "healthcheck_path",
+    ):
         value = getattr(data, field)
         if value is not None:
             setattr(eva, field, value)

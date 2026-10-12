@@ -2,7 +2,7 @@
 
 import uuid
 
-from sqlalchemy import JSON, ForeignKey, String, UniqueConstraint
+from sqlalchemy import JSON, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -18,6 +18,10 @@ class EvaProduct(IdMixin, TimestampMixin, Base):
     status: Mapped[str] = mapped_column(String(20), default="active", nullable=False)
     # Esquema de configuración permitido (props/requeridos). Nunca secretos.
     config_schema: Mapped[dict] = mapped_column(JSON, default=dict)
+    # Despliegue: repositorio de imagen, puerto interno y ruta de salud.
+    image_repo: Mapped[str] = mapped_column(String(200), default="")
+    container_port: Mapped[int] = mapped_column(Integer, default=8000)
+    healthcheck_path: Mapped[str] = mapped_column(String(120), default="/healthz")
 
     versions: Mapped[list["EvaVersion"]] = relationship(
         back_populates="product", cascade="all, delete-orphan"
