@@ -1,18 +1,22 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { Menu, X } from '@lucide/svelte';
 	import NavList from '../lib/components/NavList.svelte';
 	import ThemeToggle from '../lib/components/ThemeToggle.svelte';
+	import { clientName, loadBranding } from '../lib/stores/branding';
 	import '../app.css';
 
 	let { children } = $props();
 	let mobileOpen = $state(false);
+
+	onMount(loadBranding);
 </script>
 
 <div class="min-h-dvh lg:grid lg:grid-cols-[264px_1fr]">
 	<aside class="hidden border-r border-line bg-surface/70 backdrop-blur lg:flex lg:flex-col">
 		<div class="flex h-16 items-center gap-2 px-5">
 			<img src="/brand/logo-mark.png" alt="" class="h-8 w-8" />
-			<span class="text-[17px] font-bold tracking-[0.18em]">HAPMED</span>
+			<span class="text-[17px] font-bold tracking-[0.18em]">{$clientName}</span>
 		</div>
 		<div class="flex-1 overflow-y-auto px-3 pb-4">
 			<NavList />
@@ -33,7 +37,7 @@
 			</button>
 			<div class="flex items-center gap-2 lg:hidden">
 				<img src="/brand/logo-mark.png" alt="" class="h-7 w-7" />
-				<span class="text-[15px] font-bold tracking-[0.18em]">HAPMED</span>
+				<span class="text-[15px] font-bold tracking-[0.18em]">{$clientName}</span>
 			</div>
 			<div class="ml-auto flex items-center gap-2">
 				<ThemeToggle />
@@ -54,7 +58,7 @@
 		></button>
 		<div class="absolute inset-y-0 left-0 w-72 overflow-y-auto bg-surface p-3 shadow-xl">
 			<div class="flex items-center justify-between px-2 py-2">
-				<span class="text-[15px] font-bold tracking-[0.18em]">HAPMED</span>
+				<span class="text-[15px] font-bold tracking-[0.18em]">{$clientName}</span>
 				<button
 					class="inline-flex h-10 w-10 items-center justify-center rounded-[12px] hover:bg-surface-2"
 					aria-label="Cerrar menú"

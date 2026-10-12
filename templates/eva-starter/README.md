@@ -65,9 +65,9 @@ cliente**. Para personalizar la apariencia:
 1. Reemplaza los activos en `frontend/static/brand/`:
    - `logo-mark.png` (símbolo), `logo-appicon.png`, `favicon-64.png`,
      `apple-touch-icon.png`, `og-image.png`.
-2. Ajusta el nombre visible (por defecto «HAPMED») donde se muestra
-   (`frontend/src/routes/+layout.svelte` y `frontend/src/routes/login/+page.svelte`
-   si aplica) o usa la variable `EVA_CLIENT_NAME`.
+2. Nombre visible del cliente: define `EVA_CLIENT_NAME` en el entorno; el
+   frontend lo lee de `GET /api/v1/config` y lo muestra en la barra
+   lateral/cabecera. Por defecto: «HAPMED».
 3. Opcional: el color de acento y demás tokens están en `frontend/src/app.css`
    (`--color-accent`, `--color-accent-2`); cámbialos si el cliente tiene paleta.
 

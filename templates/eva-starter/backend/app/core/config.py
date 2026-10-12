@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     environment: str = "local"
     debug: bool = False
 
+    # Branding (rebrandable por cliente sin tocar código).
+    client_name: str = Field(default="HAPMED", alias="EVA_CLIENT_NAME")
+
     # Inyectadas por la plataforma EVAS Admin.
     version: str = Field(default="dev", alias="EVAS_VERSION")
     eva_code: str = Field(default="", alias="EVAS_EVA_CODE")
