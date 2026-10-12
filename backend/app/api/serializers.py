@@ -160,6 +160,8 @@ def installation_out(installation, secrets: list) -> dict:
         "desired_version": installation.desired_version,
         "installed_version": installation.installed_version,
         "last_operation_at": installation.last_operation_at,
+        "host_port": installation.host_port,
+        "container_name": installation.container_name,
         "services": [service_out(service) for service in installation.services],
         "domains": [domain.fqdn for domain in installation.domains],
         "secrets": [secret_ref_out(reference) for reference in secrets],

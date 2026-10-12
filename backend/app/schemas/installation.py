@@ -63,6 +63,8 @@ class InstallationOut(BaseModel):
     desired_version: str
     installed_version: str | None
     last_operation_at: datetime | None
+    host_port: int | None
+    container_name: str
     services: list[InstallationServiceOut]
     domains: list[str]
     secrets: list[SecretRefOut]
