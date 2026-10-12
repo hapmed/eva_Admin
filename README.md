@@ -55,7 +55,7 @@ npm run check && npm run lint && npm run test && npm run build
 - **Fase 4** — Instalaciones, dominios, bases de datos y operaciones ✅
 - **Fase 5** — Monitoreo, alertas y actualizaciones seguras ✅
 - **Fase 6** — Seguridad, contenedores y pruebas ✅
-- Fase 7 — Pendiente.
+- **Fase 7** — Auditoría final y entrega ✅ (ver [`docs/EVAS_ADMIN/AUDIT_REPORT.md`](docs/EVAS_ADMIN/AUDIT_REPORT.md))
 
 Sin conexión al PostgreSQL existente ni operaciones Docker reales.
 

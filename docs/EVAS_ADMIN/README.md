@@ -2,7 +2,7 @@
 
 **Producto:** EVAS Admin (panel de administración de HAPMED)
 **Repositorio:** <https://github.com/hapmed/eva_Admin>
-**Estado:** Especificación vigente. Fases 0-6 completadas (identidad, comercial, infraestructura, monitoreo, alertas y endurecimiento).
+**Estado:** Especificación vigente. Fases 0-7 completadas (entrega auditada).
 **Última actualización:** 2026-10-11
 
 > Esta carpeta contiene la especificación funcional y técnica que guiará el
@@ -116,6 +116,7 @@ La estructura concreta de `backend/` y `frontend/` se define en
 | [`OPERATIONS.md`](./OPERATIONS.md) | Backups, actualizaciones, logs, runbooks. |
 | [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md) | Fases y criterios de aceptación. |
 | [`DECISIONS.md`](./DECISIONS.md) | Registro de decisiones (ADR). |
+| [`AUDIT_REPORT.md`](./AUDIT_REPORT.md) | Auditoría final y entrega (Fase 7). |
 
 ## 7. Convenciones del repositorio
 
