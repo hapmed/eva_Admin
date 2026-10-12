@@ -4,13 +4,16 @@
 # existente (host `postgres`), que NO se gestiona desde aquí (ADR-004).
 # No declara ningún servicio PostgreSQL.
 #
-# Uso: docker compose -f ops/compose.prod.yaml build
-#      docker compose -f ops/compose.prod.yaml up -d
+# Uso (build local):  docker compose -f ops/compose.prod.yaml build
+#     (desde GHCR):   docker compose -f ops/compose.prod.yaml pull
+#                     docker compose -f ops/compose.prod.yaml up -d
+# Evita publicar puertos: se expone vía túnel/proxy (servicio `proxy`).
 
 name: evas-admin
 
 services:
   api:
+    image: ghcr.io/hapmed/evas-admin-api:${EVAS_IMAGE_TAG:-latest}
     build:
       context: ../backend
     env_file: [../.env]
@@ -34,6 +37,7 @@ services:
       retries: 3
 
   web:
+    image: ghcr.io/hapmed/evas-admin-web:${EVAS_IMAGE_TAG:-latest}
     build:
       context: ../frontend
     env_file: [../.env]
@@ -50,6 +54,7 @@ services:
         max-file: "3"
 
   agent:
+    image: ghcr.io/hapmed/evas-admin-agent:${EVAS_IMAGE_TAG:-latest}
     build:
       context: ../agent
     env_file: [../.env]
