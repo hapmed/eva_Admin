@@ -3,6 +3,7 @@
 from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
+    alerts,
     auth,
     clients,
     databases,
@@ -30,3 +31,4 @@ api_router.include_router(installations.router, prefix="/installations", tags=["
 api_router.include_router(domains.router, prefix="/domains", tags=["domains"])
 api_router.include_router(databases.router, prefix="/databases", tags=["databases"])
 api_router.include_router(operations.router, prefix="/operations", tags=["operations"])
+api_router.include_router(alerts.router, prefix="/alerts", tags=["alerts"])

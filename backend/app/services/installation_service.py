@@ -8,14 +8,25 @@ from sqlalchemy.orm import Session
 from app.core.auth import AuthContext
 from app.models.eva import EvaProduct, EvaVersion
 from app.models.infrastructure import (
+    DatabaseRecord,
     Domain,
     Installation,
     InstallationConfig,
+    InstallationService,
     Node,
     SecretReference,
 )
+from app.models.monitoring import Backup
 from app.schemas.installation import InstallationCreate, InstallationUpdate
-from app.services import audit, client_service, config_schema, eva_service, operations, subscription_service
+from app.services import (
+    audit,
+    client_service,
+    config_schema,
+    eva_service,
+    monitoring_service,
+    operations,
+    subscription_service,
+)
 from app.services.util import as_uuid
 
 
@@ -96,6 +107,14 @@ def create_installation(db: Session, context: AuthContext, data: InstallationCre
     db.flush()
 
     db.add(InstallationConfig(installation_id=installation.id, config_json=data.config))
+    db.add(
+        InstallationService(
+            installation_id=installation.id,
+            service_name=eva.code,
+            container_ref=f"eva_{eva.code}",
+            image_ref=f"{eva.code}:{data.desired_version}",
+        )
+    )
     for reference in data.secrets:
         db.add(
             SecretReference(
@@ -175,6 +194,23 @@ def upgrade(
     installation.installed_version = target_version
     installation.status = "active"
     installation.last_operation_at = datetime.now(UTC)
+
+    # Política de backup: se registra una copia (simulada) de cada base asignada.
+    now = datetime.now(UTC)
+    databases = db.scalars(
+        select(DatabaseRecord).where(DatabaseRecord.installation_id == installation.id)
+    ).all()
+    for record in databases:
+        db.add(
+            Backup(
+                database_record_id=record.id,
+                type="full",
+                status="simulated",
+                started_at=now,
+                finished_at=now,
+            )
+        )
+
     db.commit()
     db.refresh(installation)
     return installation, operation
@@ -212,6 +248,7 @@ def health_check(db: Session, context: AuthContext, installation_id: str):
         call=lambda agent: agent.health_check(str(installation.id)),
         summary="comprobación de salud (simulada)",
     )
+    monitoring_service.record_health_check(db, installation)
     installation.last_operation_at = datetime.now(UTC)
     db.commit()
     return op

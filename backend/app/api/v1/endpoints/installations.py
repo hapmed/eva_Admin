@@ -16,7 +16,8 @@ from app.schemas.installation import (
     RestartRequest,
     UpgradeRequest,
 )
-from app.services import installation_service
+from app.schemas.monitoring import LogsOut, MetricsOut
+from app.services import installation_service, monitoring_service
 
 router = APIRouter()
 
@@ -104,6 +105,32 @@ def get_health(
         "status": installation.status,
         "services": [service_out(service) for service in installation.services],
     }
+
+
+@router.get("/{installation_id}/logs", response_model=LogsOut)
+def get_logs(
+    installation_id: str,
+    _: AuthContext = Depends(require_permission("operations:read")),
+    db: Session = Depends(get_db),
+) -> dict:
+    try:
+        installation = installation_service.get_installation(db, installation_id)
+    except (ValueError, LookupError) as exc:
+        raise http_error(exc) from exc
+    return monitoring_service.get_logs(installation)
+
+
+@router.get("/{installation_id}/metrics", response_model=MetricsOut)
+def get_metrics(
+    installation_id: str,
+    _: AuthContext = Depends(require_permission("operations:read")),
+    db: Session = Depends(get_db),
+) -> dict:
+    try:
+        installation = installation_service.get_installation(db, installation_id)
+    except (ValueError, LookupError) as exc:
+        raise http_error(exc) from exc
+    return monitoring_service.get_metrics(installation)
 
 
 @router.post("/{installation_id}/restart", response_model=OperationOut)

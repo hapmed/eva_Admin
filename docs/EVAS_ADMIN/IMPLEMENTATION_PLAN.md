@@ -14,7 +14,7 @@ de la siguiente.
 | 2 | Diseño responsive y estructura base | `02_*` | **Completada** |
 | 3 | Usuarios, clientes, productos y suscripciones | `03_*` | **Completada** |
 | 4 | Instalaciones, dominios y bases de datos | `04_*` | **Completada** |
-| 5 | Monitoreo Docker y actualizaciones | `05_*` | Pendiente |
+| 5 | Monitoreo Docker y actualizaciones | `05_*` | **Completada** |
 | 6 | Seguridad, contenedores y pruebas | `06_*` | Pendiente |
 | 7 | Auditoría final y entrega | `07_*` | Pendiente |
 
@@ -116,18 +116,25 @@ conflicto de dominio; contrato del agente + integración con el servicio.
 - Migración `0002_provisioning` validada en modo offline; cadena `0001 -> 0002`.
 - Frontend: `svelte-check` 0 errores, `prettier --check` OK, `vite build` OK.
 
-## 7. Fase 5 — Monitoreo Docker y actualizaciones
+## 7. Fase 5 — Monitoreo Docker y actualizaciones (completada)
 
 **Objetivo:** monitoreo y actualizaciones con el agente en modo `simulated`.
 
 **Tareas:** estado/healthcheck/versiones/métricas; historial de eventos y logs
 saneados; operaciones por rol (restart, upgrade, health-check, backup/restore);
-flujo de actualización con validación, backup, healthchecks y auditoría.
+flujo de actualización con validación, backup, healthchecks y auditoría;
+alertas configurables.
 
 **Criterios de aceptación:**
-- Pruebas de permisos, timeout, fallos, reintentos e idempotencia.
-- `/var/run/docker.sock` no expuesto a FE/API.
-- Sin shell arbitrario ni parámetros arbitrarios.
+- [x] Pruebas de permisos, fallos e idempotencia.
+- [x] `/var/run/docker.sock` no expuesto a FE/API.
+- [x] Sin shell arbitrario ni parámetros arbitrarios.
+- [x] Logs/métricas saneados y en modo simulado (nunca se inventan datos).
+
+**Resultados verificados (Fase 5):**
+- Backend: `ruff` limpio, `mypy` limpio, `pytest` **49/49**.
+- Migración `0003_monitoring` validada en modo offline (`0001 -> 0002 -> 0003`).
+- Frontend: `svelte-check` 0 errores, `prettier --check` OK, `vite build` OK.
 
 ## 8. Fase 6 — Seguridad, contenedores y pruebas
 

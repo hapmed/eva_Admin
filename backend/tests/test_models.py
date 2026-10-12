@@ -27,5 +27,9 @@ def test_expected_tables_registered():
         "installation_configs",
         "secret_references",
         "operations",
+        "health_checks",
+        "metrics",
+        "backups",
+        "alert_states",
     }
     assert expected <= tables

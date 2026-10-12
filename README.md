@@ -53,7 +53,8 @@ npm run check && npm run lint && npm run build
 - **Fase 2** — Esqueleto (backend, frontend, agente en modo simulado) ✅
 - **Fase 3** — Usuarios, clientes, EVA y suscripciones ✅
 - **Fase 4** — Instalaciones, dominios, bases de datos y operaciones ✅
-- Fases 5-7 — Pendientes.
+- **Fase 5** — Monitoreo, alertas y actualizaciones seguras ✅
+- Fases 6-7 — Pendientes.
 
 Sin conexión al PostgreSQL existente ni operaciones Docker reales.
 

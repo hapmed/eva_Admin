@@ -17,13 +17,16 @@ from app.models.infrastructure import (
     Operation,
     SecretReference,
 )
+from app.models.monitoring import AlertState, Backup, HealthCheck, Metric
 from app.models.subscription import Plan, Subscription, SubscriptionEvent
 from app.models.token import ApiToken
 from app.models.user import HapmedUser, Permission, Role, role_permissions, user_roles
 
 __all__ = [
+    "AlertState",
     "ApiToken",
     "AuditLog",
+    "Backup",
     "Client",
     "ClientUser",
     "DatabaseRecord",
@@ -31,9 +34,11 @@ __all__ = [
     "EvaProduct",
     "EvaVersion",
     "HapmedUser",
+    "HealthCheck",
     "Installation",
     "InstallationConfig",
     "InstallationService",
+    "Metric",
     "Node",
     "Operation",
     "Permission",

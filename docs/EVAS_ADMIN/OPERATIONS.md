@@ -145,6 +145,33 @@ reconocerse/resolverse desde el panel.
 > El desarrollo local **no** debe conectarse al PostgreSQL existente sin
 > autorización ni usar contenedores preexistentes.
 
+### 9.1 Aplicar migraciones (entorno VPS)
+
+Las migraciones se aplican **en el VPS**, contra la base administrativa de EVAS
+(no contra las bases de negocio de clientes), y **nunca** desde el desarrollo
+local sin autorización. La instancia PostgreSQL existente se trata como
+recurso preexistente (ADR-004).
+
+Procedimiento autorizado (ejecutar en el VPS, con respaldo previo):
+
+```bash
+# 1) Respaldo de la base administrativa antes de migrar.
+# 2) Variables de entorno del backend (EVAS_DB_*) ya configuradas en el host.
+cd backend
+uv run alembic upgrade head        # aplica 0001 -> 0003 (idempotente por revisión)
+# 3) Verificar:
+uv run alembic current
+```
+
+- No se crean bases ni roles automáticamente; deben existir por autorización
+  previa (ver [`POSTGRES_EXISTING_INSTANCE.md`](./POSTGRES_EXISTING_INSTANCE.md)).
+- No se ejecutan migraciones contra las bases de negocio de clientes.
+- Tras migrar, sembrar permisos/roles de forma idempotente.
+
+> Estado: **pendiente de ejecución autorizada en el VPS**. En integración
+> continua, `alembic upgrade head --sql` (offline) valida la migración sin
+> conectarse a ninguna base.
+
 ## 10. Pendientes de confirmación
 
 1. Herramienta/almacenamiento de backups. [POR VERIFICAR]

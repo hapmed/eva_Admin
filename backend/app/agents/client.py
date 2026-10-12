@@ -22,6 +22,10 @@ class OperationsAgent(Protocol):
 
     def health_check(self, installation_id: str) -> dict[str, Any]: ...
 
+    def get_logs(self, installation_id: str, limit: int = 200) -> dict[str, Any]: ...
+
+    def get_metrics(self, installation_id: str) -> dict[str, Any]: ...
+
     def request_backup(self, database_ref: str) -> dict[str, Any]: ...
 
     def request_restore(self, database_ref: str, backup_ref: str) -> dict[str, Any]: ...
@@ -54,6 +58,13 @@ class SimulatedAgent:
 
     def health_check(self, installation_id: str) -> dict[str, Any]:
         return {"simulated": True, "installation_id": installation_id, "status": "unknown"}
+
+    def get_logs(self, installation_id: str, limit: int = 200) -> dict[str, Any]:
+        # Sin cambios reales: no se inventan líneas de log.
+        return {"simulated": True, "installation_id": installation_id, "lines": [], "limit": limit}
+
+    def get_metrics(self, installation_id: str) -> dict[str, Any]:
+        return {"simulated": True, "installation_id": installation_id, "samples": []}
 
     def request_backup(self, database_ref: str) -> dict[str, Any]:
         return {"simulated": True, "database_ref": database_ref, "location_ref": None}
