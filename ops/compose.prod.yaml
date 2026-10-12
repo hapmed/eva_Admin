@@ -62,6 +62,9 @@ services:
     networks: [evas_admin_net]
     restart: unless-stopped
     # Modo real: SOLO el agente accede a Docker. El socket se monta aquí y en ningún otro servicio.
+    # group_add = GID del grupo `docker` del host (ajustar si cambia): acceso al socket sin ser root.
+    group_add:
+      - "989"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     logging:
