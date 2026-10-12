@@ -43,7 +43,7 @@ Configuración: copiar [`.env.example`](.env.example) a `.env` (valores ficticio
 uv run ruff check . && uv run mypy app && uv run pytest
 
 # frontend
-npm run check && npm run lint && npm run build
+npm run check && npm run lint && npm run test && npm run build
 ```
 
 ## Estado del proyecto
@@ -54,7 +54,8 @@ npm run check && npm run lint && npm run build
 - **Fase 3** — Usuarios, clientes, EVA y suscripciones ✅
 - **Fase 4** — Instalaciones, dominios, bases de datos y operaciones ✅
 - **Fase 5** — Monitoreo, alertas y actualizaciones seguras ✅
-- Fases 6-7 — Pendientes.
+- **Fase 6** — Seguridad, contenedores y pruebas ✅
+- Fase 7 — Pendiente.
 
 Sin conexión al PostgreSQL existente ni operaciones Docker reales.
 

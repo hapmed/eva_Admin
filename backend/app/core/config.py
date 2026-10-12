@@ -43,6 +43,11 @@ class Settings(BaseSettings):
     # CORS: orígenes permitidos (vacío = ninguno).
     cors_origins: list[str] = Field(default_factory=list)
 
+    # Rate limiting (rutas sensibles).
+    rate_limit_enabled: bool = True
+    rate_limit_auth_per_minute: int = 20
+    rate_limit_operations_per_minute: int = 120
+
     # Agente de operaciones
     agent_mode: str = Field(default="simulated", description="simulated | real")
 

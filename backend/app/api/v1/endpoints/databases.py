@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import AuthContext, require_permission
 from app.api.errors import http_error
 from app.api.serializers import database_out, operation_out
+from app.core.rate_limit import rate_limit
 from app.db.session import get_db
 from app.schemas.installation import (
     DatabaseCreate,
@@ -56,7 +57,9 @@ def get_database(
     return database_out(record)
 
 
-@router.post("/{database_id}/backup", response_model=OperationOut)
+@router.post(
+    "/{database_id}/backup", response_model=OperationOut, dependencies=[Depends(rate_limit("operations"))]
+)
 def backup_database(
     database_id: str,
     data: OperationRequest,
@@ -70,7 +73,9 @@ def backup_database(
     return operation_out(operation)
 
 
-@router.post("/{database_id}/restore", response_model=OperationOut)
+@router.post(
+    "/{database_id}/restore", response_model=OperationOut, dependencies=[Depends(rate_limit("operations"))]
+)
 def restore_database(
     database_id: str,
     data: RestoreRequest,

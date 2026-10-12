@@ -48,8 +48,14 @@ def run(
     db.add(operation)
     db.flush()
 
-    result = call(agent) if call is not None else {}
-    operation.status = "succeeded"
+    result: dict = {}
+    try:
+        result = call(agent) if call is not None else {}
+        operation.status = "succeeded"
+    except Exception:  # noqa: BLE001 - se reporta un código genérico, sin detalles
+        operation.status = "failed"
+        operation.error_code = "agent_error"
+
     operation.result_json = result
     operation.simulated = bool(result.get("simulated", agent.mode != "real"))
     operation.result_summary = summary

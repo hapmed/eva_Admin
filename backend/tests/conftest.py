@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 import app.models  # noqa: F401  (registra los modelos)
+from app.core import rate_limit as rate_limit_module
 from app.core.config import get_settings
 from app.core.security import hash_password
 from app.db.base import Base
@@ -22,7 +23,9 @@ def _settings(monkeypatch):
     monkeypatch.setenv("EVAS_SESSION_COOKIE_SECURE", "false")
     monkeypatch.setenv("EVAS_ENVIRONMENT", "test")
     get_settings.cache_clear()
+    rate_limit_module.reset()
     yield
+    rate_limit_module.reset()
     get_settings.cache_clear()
 
 

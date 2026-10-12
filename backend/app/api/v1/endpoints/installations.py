@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import AuthContext, require_permission
 from app.api.errors import http_error
 from app.api.serializers import installation_out, operation_out, service_out
+from app.core.rate_limit import rate_limit
 from app.db.session import get_db
 from app.schemas.installation import (
     InstallationCreate,
@@ -38,7 +39,9 @@ def list_installations(
     return [_out(db, installation) for installation in installations]
 
 
-@router.post("", response_model=InstallationOut, status_code=201)
+@router.post(
+    "", response_model=InstallationOut, status_code=201, dependencies=[Depends(rate_limit("operations"))]
+)
 def create_installation(
     data: InstallationCreate,
     context: AuthContext = Depends(require_permission("installations:write")),
@@ -133,7 +136,11 @@ def get_metrics(
     return monitoring_service.get_metrics(installation)
 
 
-@router.post("/{installation_id}/restart", response_model=OperationOut)
+@router.post(
+    "/{installation_id}/restart",
+    response_model=OperationOut,
+    dependencies=[Depends(rate_limit("operations"))],
+)
 def restart_service(
     installation_id: str,
     data: RestartRequest,
@@ -149,7 +156,11 @@ def restart_service(
     return operation_out(operation)
 
 
-@router.post("/{installation_id}/upgrade", response_model=OperationOut)
+@router.post(
+    "/{installation_id}/upgrade",
+    response_model=OperationOut,
+    dependencies=[Depends(rate_limit("operations"))],
+)
 def upgrade_installation(
     installation_id: str,
     data: UpgradeRequest,
@@ -165,7 +176,11 @@ def upgrade_installation(
     return operation_out(operation)
 
 
-@router.post("/{installation_id}/health-check", response_model=OperationOut)
+@router.post(
+    "/{installation_id}/health-check",
+    response_model=OperationOut,
+    dependencies=[Depends(rate_limit("operations"))],
+)
 def run_health_check(
     installation_id: str,
     context: AuthContext = Depends(require_permission("installations:operate")),

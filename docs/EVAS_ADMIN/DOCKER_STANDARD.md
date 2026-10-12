@@ -103,7 +103,8 @@ networks:
 
 ## 8. Logs
 
-- `logging` con límite de tamaño y número de archivos (rotación).
+- `logging` con límite de tamaño y número de archivos (rotación) — configurado en
+  `ops/compose.yaml` (`max-size: 10m`, `max-file: 3`).
 - Formato estructurado; **saneado** (sin secretos).
 - Retención definida en [`OPERATIONS.md`](./OPERATIONS.md).
 

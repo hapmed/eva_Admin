@@ -76,8 +76,13 @@
 ## 7. Red y transporte
 
 - HTTPS obligatorio en producción.
-- **CORS** restringido a orígenes configurados.
-- **Rate limiting** en rutas sensibles (`/auth/*`, operaciones).
+- **CORS** restringido a orígenes configurados (vacío = ninguno).
+- **Rate limiting** en rutas sensibles (`/auth/*` y operaciones) — implementado
+  en memoria (ventana por IP); en multi-réplica usar almacén compartido.
+- **Errores genéricos:** el backend nunca devuelve trazas ni detalles internos;
+  las excepciones no controladas responden `500 {"error":{"code":"internal"}}`.
+- Fallos del agente se registran como operación `failed` con código genérico
+  (`agent_error`), sin exponer el mensaje.
 - Exposición mínima de puertos; superficies internas sin publicar.
 - Publicación vía Cloudflare Tunnel (ADR-010); sin tokens de Cloudflare en el
   código ni en la imagen.

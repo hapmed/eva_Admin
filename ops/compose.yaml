@@ -12,6 +12,11 @@ services:
     env_file: [../.env]
     networks: [evas_admin_net]
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     healthcheck:
       test:
         [
@@ -34,12 +39,22 @@ services:
     networks: [evas_admin_net]
     depends_on: [api]
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   agent:
     build: ../agent
     env_file: [../.env]
     networks: [evas_admin_net]
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     # Modo simulated por defecto. En modo real, montar el socket Docker SÓLO aquí,
     # con permisos mínimos y tras revisión de seguridad (ADR-007).
 

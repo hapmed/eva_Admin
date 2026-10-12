@@ -15,7 +15,7 @@ de la siguiente.
 | 3 | Usuarios, clientes, productos y suscripciones | `03_*` | **Completada** |
 | 4 | Instalaciones, dominios y bases de datos | `04_*` | **Completada** |
 | 5 | Monitoreo Docker y actualizaciones | `05_*` | **Completada** |
-| 6 | Seguridad, contenedores y pruebas | `06_*` | Pendiente |
+| 6 | Seguridad, contenedores y pruebas | `06_*` | **Completada** |
 | 7 | Auditoría final y entrega | `07_*` | Pendiente |
 
 ## 2. Fase 0 — Documentación (completada)
@@ -136,20 +136,28 @@ alertas configurables.
 - Migración `0003_monitoring` validada en modo offline (`0001 -> 0002 -> 0003`).
 - Frontend: `svelte-check` 0 errores, `prettier --check` OK, `vite build` OK.
 
-## 8. Fase 6 — Seguridad, contenedores y pruebas
+## 8. Fase 6 — Seguridad, contenedores y pruebas (completada)
 
 **Objetivo:** endurecer y empaquetar.
 
-**Tareas:** auth/authz; CSRF si aplica; CORS; rate limiting; validación; gestión
-de secretos; auditoría; versiones fijas; no-root; healthchecks; rotación de logs;
-`Dockerfile` backend y frontend; `compose.yaml`; `.dockerignore`, `.gitignore`,
-`.env.example`; documentación de backup/restore/update/rollback.
+**Tareas:** auth/authz; CSRF; CORS; **rate limiting**; validación; manejo de
+errores sin detalles internos; gestión de secretos; auditoría; versiones fijas;
+no-root; healthchecks; rotación de logs; `Dockerfile` backend y frontend;
+`compose.yaml`; `.dockerignore`, `.gitignore`, `.env.example`; documentación de
+backup/restore/update/rollback.
 
 **Criterios de aceptación:**
-- Suite de pruebas (unitarias, API, roles, aislamiento, fechas, migraciones en
-  base de prueba, fallos del agente).
-- Sin secretos en Git/logs.
-- **No** se modifica ni reinicia el PostgreSQL existente.
+- [x] Suite de pruebas (unitarias, API, roles, aislamiento, fechas, migraciones,
+  fallos del agente, rate limiting).
+- [x] Sin secretos en Git/logs.
+- [x] **No** se modifica ni reinicia el PostgreSQL existente.
+- [x] Contenedores sin `privileged`, sin `docker.sock`, con healthcheck y rotación de logs.
+
+**Resultados verificados (Fase 6):**
+- Backend: `ruff` limpio, `mypy` limpio, `pytest` **52/52**.
+- Frontend: `svelte-check` 0 errores, `prettier --check` OK, `vitest` **4/4**, `vite build` OK.
+- Nota: los `Dockerfile`/`compose.yaml` **no** se han construido en este entorno
+  (sin Docker); se validan por revisión.
 
 ## 9. Fase 7 — Auditoría final y entrega
 

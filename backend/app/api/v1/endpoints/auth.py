@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_auth_context
 from app.core.auth import AuthContext
 from app.core.config import get_settings
+from app.core.rate_limit import rate_limit
 from app.core.security import verify_password
 from app.core.session import create_session_token, new_csrf_token
 from app.db.session import get_db
@@ -50,7 +51,7 @@ def get_csrf(response: Response) -> CsrfResponse:
     return CsrfResponse(csrf_token=token)
 
 
-@router.post("/login", response_model=MeResponse)
+@router.post("/login", response_model=MeResponse, dependencies=[Depends(rate_limit("auth"))])
 def login(payload: LoginRequest, response: Response, db: Session = Depends(get_db)) -> MeResponse:
     settings = get_settings()
     user = db.scalar(select(HapmedUser).where(HapmedUser.email == payload.email))
