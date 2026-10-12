@@ -104,12 +104,16 @@ docker compose -f ops/compose.yaml run --rm api python -c \
 "from app.db.bootstrap import ensure_superadmin; from app.db.session import get_session_factory; ensure_superadmin(get_session_factory()(), 'admin@hapmed.example', 'CAMBIA-ESTO')"
 ```
 
-### 3. Construir y arrancar
+### 3. Desplegar imágenes (GHCR)
+
+Las imágenes se publican automáticamente en GHCR (`publish.yml`) como
+`ghcr.io/hapmed/evas-admin-{api,web,agent}:latest` y `:sha-<commit>`. Los
+paquetes son **públicos** (no requieren `docker login`).
 
 ```bash
-docker compose -f ops/compose.yaml build
-docker compose -f ops/compose.yaml up -d
-docker compose -f ops/compose.yaml ps
+docker compose -f ops/compose.prod.yaml pull
+docker compose -f ops/compose.prod.yaml up -d
+docker compose -f ops/compose.prod.yaml ps
 ```
 
 ### 4. Verificación
@@ -123,17 +127,28 @@ docker compose -f ops/compose.yaml exec api python -c \
 ### 5. Actualización y rollback
 
 ```bash
-# Actualizar
-git pull && docker compose -f ops/compose.yaml build && \
-docker compose -f ops/compose.yaml run --rm api alembic upgrade head && \
-docker compose -f ops/compose.yaml up -d
+# Actualizar a la última publicada
+git pull
+docker compose -f ops/compose.prod.yaml pull
+docker compose -f ops/compose.prod.yaml run --rm api alembic upgrade head
+docker compose -f ops/compose.prod.yaml up -d
 
-# Rollback (con autorización): volver a un commit previo y reconstruir
-git checkout <commit-anterior> && docker compose -f ops/compose.yaml build && \
-docker compose -f ops/compose.yaml up -d
+# Rollback a un commit concreto (imagen etiquetada sha-<commit>)
+echo 'EVAS_IMAGE_TAG=sha-<commit>' >> .env
+docker compose -f ops/compose.prod.yaml pull && docker compose -f ops/compose.prod.yaml up -d
+# (elimina EVAS_IMAGE_TAG del .env para volver a :latest)
+
 # Downgrade de esquema (SÓLO con autorización y respaldo previo):
-docker compose -f ops/compose.yaml run --rm api alembic downgrade -1
+docker compose -f ops/compose.prod.yaml run --rm api alembic downgrade -1
 ```
+
+## Integración continua (GitHub Actions)
+
+- `.github/workflows/ci.yml` — backend (ruff, mypy, pytest), agente y frontend
+  (check, lint, test, build) en cada push/PR.
+- `.github/workflows/publish.yml` — en push a `main` construye y publica las tres
+  imágenes en GHCR (`latest` y `sha-<commit>`). Build local opcional con
+  `docker compose -f ops/compose.prod.yaml build`.
 
 ## Requiere autorización humana
 

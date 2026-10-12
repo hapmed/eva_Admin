@@ -172,6 +172,23 @@ uv run alembic current
 > continua, `alembic upgrade head --sql` (offline) valida la migración sin
 > conectarse a ninguna base.
 
+### 9.2 Despliegue por imagen (GHCR)
+
+Las imágenes se publican en GHCR con `publish.yml` (`latest` y `sha-<commit>`,
+paquetes **públicos**). El VPS despliega **descargando** imágenes, sin construir
+local:
+
+```bash
+cd /opt/apps/eva_admin
+git pull
+docker compose -f ops/compose.prod.yaml pull
+docker compose -f ops/compose.prod.yaml run --rm api alembic upgrade head
+docker compose -f ops/compose.prod.yaml up -d
+```
+
+Rollback por versión: definir `EVAS_IMAGE_TAG=sha-<commit>` en `.env` y volver a
+`pull`/`up -d`. Requiere que ese commit haya sido publicado por el workflow.
+
 ## 10. Pendientes de confirmación
 
 1. Herramienta/almacenamiento de backups. [POR VERIFICAR]
