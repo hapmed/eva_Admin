@@ -44,6 +44,7 @@ services:
     environment:
       PORT: "3000"
       HOST: "0.0.0.0"
+      API_INTERNAL_URL: "http://api:8000"
     networks: [evas_admin_net]
     depends_on: [api]
     restart: unless-stopped

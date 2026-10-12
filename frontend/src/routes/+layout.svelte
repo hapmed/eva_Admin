@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { get } from 'svelte/store';
+	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { KeyRound, Menu, X } from '@lucide/svelte';
 	import NavList from '../lib/components/NavList.svelte';
@@ -23,6 +25,10 @@
 	onMount(async () => {
 		canPasskey = webAuthnSupported();
 		await loadSession();
+		// Respaldo del guard SSR: si no hay sesión, ir a login.
+		if (!get(sessionUser) && page.url.pathname !== '/login') {
+			await goto('/login');
+		}
 	});
 </script>
 
