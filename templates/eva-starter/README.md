@@ -56,3 +56,27 @@ cd frontend && npm run check && npm run lint && npm run test && npm run build
 - Cada despliegue se confirma con `GET /healthz` (debe responder `200`).
 
 Ver el contrato completo en [`../../docs/EVAS_APPS/REQUISITOS_EVA.md`](../../docs/EVAS_APPS/REQUISITOS_EVA.md).
+
+## Branding por cliente
+
+Este repositorio (`hapmed/eva`) es **uno solo** que se **modifica/rebrandea por
+cliente**. Para personalizar la apariencia:
+
+1. Reemplaza los activos en `frontend/static/brand/`:
+   - `logo-mark.png` (símbolo), `logo-appicon.png`, `favicon-64.png`,
+     `apple-touch-icon.png`, `og-image.png`.
+2. Ajusta el nombre visible (por defecto «HAPMED») donde se muestra
+   (`frontend/src/routes/+layout.svelte` y `frontend/src/routes/login/+page.svelte`
+   si aplica) o usa la variable `EVA_CLIENT_NAME`.
+3. Opcional: el color de acento y demás tokens están en `frontend/src/app.css`
+   (`--color-accent`, `--color-accent-2`); cámbialos si el cliente tiene paleta.
+
+> Mantén `eva.yaml` con `code`/`image` estables; el branding no cambia el
+> contrato con EVAS Admin.
+
+## Credenciales
+
+El archivo `contras.txt` (credenciales del VPS/PostgreSQL/Cloudflare) se incluye
+en esta carpeta **solo para el desarrollo** y **NO se versiona** (está en
+`.gitignore`). Nunca lo subas a Git ni lo compartas.
+

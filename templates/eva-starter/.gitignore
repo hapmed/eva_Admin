@@ -2,6 +2,8 @@
 .env
 .env.*
 !.env.example
+contras.txt
+contras*.txt
 
 # Python
 __pycache__/
