@@ -1,0 +1,13 @@
+# Proxy único para EVAS Admin: sirve la web y enruta /api/* al backend.
+# El túnel (Cloudflare/Arcane) apunta a este servicio (host :80 / host 127.0.0.1:8080).
+:80 {
+	encode gzip
+
+	handle /api/* {
+		reverse_proxy api:8000
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+}

@@ -63,6 +63,23 @@ services:
     # Modo simulated por defecto. En modo real, montar el socket Docker SÓLO aquí,
     # con permisos mínimos y tras revisión de seguridad (ADR-007).
 
+  # Punto de entrada único: la web y /api/* en el mismo origen.
+  # El túnel debe apuntar a http://127.0.0.1:8080 (host) o http://proxy:80 (red apps-net).
+  proxy:
+    image: caddy:2.8-alpine
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    ports:
+      - "127.0.0.1:8080:80"
+    networks: [evas_admin_net, apps-net]
+    depends_on: [api, web]
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 networks:
   evas_admin_net:
     driver: bridge
