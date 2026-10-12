@@ -51,6 +51,7 @@ def provision_database(client_ref: str, eva_code: str) -> tuple[str, str, str]:
         raise RuntimeError("aprovisionamiento de base de datos deshabilitado")
 
     import psycopg
+    from psycopg import sql
 
     db_name, db_user = database_names(client_ref, eva_code)
     password = secrets.token_urlsafe(24)
@@ -63,12 +64,24 @@ def provision_database(client_ref: str, eva_code: str) -> tuple[str, str, str]:
     with psycopg.connect(admin_dsn, autocommit=True) as connection, connection.cursor() as cursor:
         cursor.execute("SELECT 1 FROM pg_roles WHERE rolname = %s", (db_user,))
         if cursor.fetchone():
-            cursor.execute(f'ALTER ROLE "{db_user}" WITH LOGIN PASSWORD %s', (password,))
+            cursor.execute(
+                sql.SQL("ALTER ROLE {} WITH LOGIN PASSWORD {}").format(
+                    sql.Identifier(db_user), sql.Literal(password)
+                )
+            )
         else:
-            cursor.execute(f'CREATE ROLE "{db_user}" LOGIN PASSWORD %s', (password,))
+            cursor.execute(
+                sql.SQL("CREATE ROLE {} LOGIN PASSWORD {}").format(
+                    sql.Identifier(db_user), sql.Literal(password)
+                )
+            )
         cursor.execute("SELECT 1 FROM pg_database WHERE datname = %s", (db_name,))
         if not cursor.fetchone():
-            cursor.execute(f'CREATE DATABASE "{db_name}" OWNER "{db_user}"')
+            cursor.execute(
+                sql.SQL("CREATE DATABASE {} OWNER {}").format(
+                    sql.Identifier(db_name), sql.Identifier(db_user)
+                )
+            )
 
     database_url = (
         f"postgresql+psycopg://{db_user}:{password}"
