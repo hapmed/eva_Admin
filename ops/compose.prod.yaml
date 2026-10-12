@@ -64,13 +64,13 @@ services:
     # con permisos mínimos y tras revisión de seguridad (ADR-007).
 
   # Punto de entrada único: la web y /api/* en el mismo origen.
-  # El túnel debe apuntar a http://127.0.0.1:8080 (host) o http://proxy:80 (red apps-net).
+  # El túnel debe apuntar a http://127.0.0.1:8081 (host) o http://proxy:80 (red apps-net).
   proxy:
     image: caddy:2.8-alpine
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
     ports:
-      - "127.0.0.1:8080:80"
+      - "127.0.0.1:8081:80"
     networks: [evas_admin_net, apps-net]
     depends_on: [api, web]
     restart: unless-stopped
