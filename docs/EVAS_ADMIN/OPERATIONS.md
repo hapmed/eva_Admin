@@ -10,16 +10,17 @@ Describe cómo se opera EVAS Admin y las instalaciones EVA que gestiona:
 backups/restauración, actualizaciones y rollback, logs, monitoreo, alertas y
 respuesta a incidentes.
 
-> En el MVP, las operaciones Docker se ejecutan con **adaptador simulado** (no
-> producen cambios reales). La ejecución real requiere autorización humana y un
-> agente restringido ([`DECISIONS.md`](./DECISIONS.md#adr-007)).
+> En el MVP, las operaciones Docker se ejecutan con el agente en modo
+> **`simulated`** (no producen cambios reales). El modo `real` requiere
+> autorización humana y revisión de seguridad. El agente es un componente propio
+> del proyecto ([`DECISIONS.md`](./DECISIONS.md#adr-007)).
 
 ## 2. Backups
 
 ### 2.1 Qué se respalda
 
 - Base administrativa de EVAS (metadatos).
-- Bases de negocio de cada cliente (según ADR-012, [POR VERIFICAR]).
+- **Una base de negocio por cliente** (ADR-012), cada una con su propio backup.
 
 ### 2.2 Objeto `BACKUP`
 
@@ -149,4 +150,4 @@ reconocerse/resolverse desde el panel.
 1. Herramienta/almacenamiento de backups. [POR VERIFICAR]
 2. Retención definitiva de logs y backups.
 3. Canal de notificación de alertas.
-4. Existencia del agente real y su contrato de autorización.
+4. Contrato exacto del canal backend⇄agente (mTLS vs token). [POR VERIFICAR]

@@ -1,6 +1,7 @@
 # ARCHITECTURE.md — Arquitectura de EVAS Admin
 
-**Estado:** Propuesta inicial de arquitectura. Sujeta a confirmación en Fase 1.
+**Estado:** Aprobada en Fase 1. Decisiones clave cerradas
+(ver [`DECISIONS.md`](./DECISIONS.md)).
 **Documentos relacionados:** [`DATA_MODEL.md`](./DATA_MODEL.md),
 [`API_CONTRACTS.md`](./API_CONTRACTS.md), [`SECURITY.md`](./SECURITY.md),
 [`DOCKER_STANDARD.md`](./DOCKER_STANDARD.md).
@@ -24,8 +25,8 @@ flowchart TB
     CLI["Usuarios de cliente"]
   end
 
-  subgraph Z1["Zona 1 · Borde (futuro)"]
-    CF["Cloudflare Tunnel [PROPUESTA]"]
+  subgraph Z1["Zona 1 · Borde"]
+    CF["Cloudflare Tunnel [CONFIRMADO]"]
   end
 
   subgraph Z2["Zona 2 · EVAS Admin (Docker Compose)"]
@@ -34,8 +35,8 @@ flowchart TB
     AG["Agente de Operaciones (restringido)"]
   end
 
-  subgraph Z3["Zona 3 · Preexistente / Clientes (NO autogestionado en MVP)"]
-    PG[("PostgreSQL existente (contenedor Docker)")]
+  subgraph Z3["Zona 3 · Datos e infraestructura"]
+    PG[("PostgreSQL existente (base admin + una base por cliente)")]
     NODES["Nodos Docker de instalaciones"]
   end
 
@@ -78,15 +79,19 @@ flowchart TB
 - Emite **solicitudes de operación** al agente; no ejecuta Docker.
 - Auditoría y alertas.
 
-### 3.3 Agente de Operaciones (servicio separado, restringido)
+### 3.3 Agente de Operaciones (propio, separado y restringido)
 
-- Superficie mínima, operaciones **tipadas** (p. ej. `restart_installation`,
-  `upgrade_installation`, `get_health`, `request_backup`).
-- Permisos mínimos sobre la API Docker.
-- No acepta imágenes, puertos, montajes ni privilegios arbitrarios.
-- Requiere autorización (token/mTLS) y registra toda acción.
-- **En MVP:** se implementa un **adaptador simulado** que no realiza cambios
-  reales y lo indica explícitamente.
+- **Se construye como parte de este proyecto** (carpeta `agent/`), en su propio
+  contenedor del Compose de EVAS Admin.
+- Superficie mínima, operaciones **tipadas** (p. ej. `deploy_installation`,
+  `upgrade_installation`, `restart_service`, `health_check`, `request_backup`,
+  `request_restore`).
+- Permisos mínimos sobre la API Docker; no acepta imágenes, puertos, montajes ni
+  privilegios arbitrarios.
+- Se autentica con el backend mediante **token/mTLS** y registra toda acción.
+- **Modos:** `simulated` (no realiza cambios reales; para local/MVP) y `real`
+  (requiere autorización humana y revisión de seguridad). El modo se elige por
+  configuración de despliegue, **nunca** desde la interfaz.
 
 ### 3.4 PostgreSQL existente
 
@@ -153,6 +158,31 @@ frontend/
 └─ Dockerfile
 ```
 
+### 4.3 Agente de Operaciones (propuesta)
+
+```
+agent/
+├─ app/
+│  ├─ main.py             # Servicio HTTP mínimo
+│  ├─ config.py           # Modo simulated/real, credenciales Docker, token
+│  ├─ auth.py             # Verificación token/mTLS del backend
+│  ├─ operations/         # Handlers tipados (deploy, upgrade, restart, ...)
+│  ├─ drivers/
+│  │  ├─ docker_client.py # Acceso acotado a Docker (labels evas.managed_by)
+│  │  └─ simulated.py     # Driver simulado (local/MVP)
+│  └─ audit.py            # Registro de operaciones
+├─ tests/
+└─ Dockerfile
+```
+
+### 4.4 Gestión de datos (una base por cliente)
+
+- **Base administrativa** (`evas_admin`): metadatos de EVAS Admin, en la
+  instancia PostgreSQL existente.
+- **Una base de negocio por cliente** (ADR-012): independiente entre clientes y
+  de la administrativa. El backend resuelve credenciales por cliente desde el
+  gestor de secretos; **nunca** se exponen al frontend.
+
 ## 5. Modelo de dominio (resumen)
 
 Entidades separadas y relacionadas: **Cliente**, **Suscripción**, **EVA**,
@@ -176,8 +206,9 @@ flowchart LR
   cliente y Solo lectura.
 - **Usuarios de cliente:** roles separados de los internos.
 - Autorización por **permiso** (no sólo por rol).
-- Sesión por cookie HttpOnly + CSRF, o token; a decidir en
-  [`DECISIONS.md`](./DECISIONS.md). Detalle en [`SECURITY.md`](./SECURITY.md).
+- **Dual (ADR-009):** cookie `HttpOnly`+`Secure`+`SameSite` con **CSRF** para la
+  SPA, y **token** Bearer de alcance mínimo para integraciones y para el agente.
+  Detalle en [`SECURITY.md`](./SECURITY.md).
 
 ## 7. Flujos principales
 
@@ -222,14 +253,27 @@ sequenceDiagram
   API-->>FE: Estado final + eventos
 ```
 
-## 8. Observabilidad
+## 8. Observabilidad, backups y pruebas
 
+**Observabilidad**
 - Logs estructurados y **saneados** (sin secretos) con retención y rotación
   definidas ([`OPERATIONS.md`](./OPERATIONS.md)).
 - Endpoints de salud: `/healthz` (liveness) y `/readyz` (readiness) sin filtrar
   secretos.
-- Métricas disponibles si el agente las provee (CPU/RAM). Ver [`DOCKER_STANDARD.md`](./DOCKER_STANDARD.md).
+- Métricas por instalación si el agente las provee (CPU/RAM).
 - Alertas configurables (vencimientos, healthcheck fallido, backup ausente).
+
+**Backups y recuperación**
+- Backups por base (administrativa y una por cliente) según política
+  ([`OPERATIONS.md`](./OPERATIONS.md)).
+- Restauración auditada y con confirmación; rollback documentado.
+
+**Pruebas (ADR-015)**
+- Backend: `pytest` (unitarias + API con `TestClient`), aislamiento
+  multi-tenant, migraciones en base efímera, contrato del agente (mock) e
+  idempotencia.
+- Frontend: `svelte-check` (tipos), `vitest` (unidades) y lint.
+- CI: lint + typecheck + tests **antes** del build de imágenes.
 
 ## 9. Riesgos y mitigaciones
 
@@ -243,8 +287,8 @@ sequenceDiagram
 
 ## 10. Pendientes de confirmación
 
-- Método de autenticación definitivo (cookie+CSRF vs token). Ver [`DECISIONS.md`](./DECISIONS.md).
-- Estrategia de aislamiento de datos de negocio (base por cliente vs esquema por
-  cliente). [POR VERIFICAR]
-- Existencia y contrato real del agente de operaciones. [POR VERIFICAR]
-- Detalles de la instancia PostgreSQL existente. Ver [`POSTGRES_EXISTING_INSTANCE.md`](./POSTGRES_EXISTING_INSTANCE.md).
+- Detalles y permisos reales de la instancia PostgreSQL existente
+  ([`POSTGRES_EXISTING_INSTANCE.md`](./POSTGRES_EXISTING_INSTANCE.md)).
+- Gestor de secretos definitivo (env vs Vault) y mapa de conexiones por cliente.
+- Canal de notificación de alertas e incidentes.
+- ¿Los usuarios de cliente acceden al panel o es sólo interno?

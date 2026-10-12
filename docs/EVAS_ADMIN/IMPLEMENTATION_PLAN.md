@@ -10,7 +10,7 @@ de la siguiente.
 | Fase | Nombre | Prompt | Estado |
 |------|--------|--------|--------|
 | 0 | Documentación de especificación | `00_*` | **Completada (este entregable)** |
-| 1 | Arquitectura y plan detallado | `01_*` | Pendiente |
+| 1 | Arquitectura y plan detallado | `01_*` | **Completada** |
 | 2 | Diseño responsive y estructura base | `02_*` | Pendiente |
 | 3 | Usuarios, clientes, productos y suscripciones | `03_*` | Pendiente |
 | 4 | Instalaciones, dominios y bases de datos | `04_*` | Pendiente |
@@ -29,22 +29,25 @@ de la siguiente.
 - [x] Decisiones marcadas como CONFIRMADO/PROPUESTA/POR VERIFICAR.
 - [x] PostgreSQL existente tratado como preexistente.
 
-## 3. Fase 1 — Arquitectura y plan detallado
+## 3. Fase 1 — Arquitectura y plan detallado (completada)
 
 **Objetivo:** cerrar decisiones abiertas y afinar modelo/endpoints/plan.
 
-**Tareas:**
-- Resolver ADR-009 (auth), ADR-012 (aislamiento de datos), ADR-010 (túnel).
-- Confirmar existencia del agente de operaciones (ADR-007).
-- Afinar diagramas de instalación/actualización.
+**Decisiones cerradas:**
+- ADR-009 auth: **dual** (cookie SPA + token integraciones/agente).
+- ADR-012 aislamiento: **una base de datos por cliente**.
+- ADR-010 túnel: **Cloudflare Tunnel**.
+- ADR-007 agente: **se construye en este proyecto**.
+- Añadidos ADR-015 (pruebas) y ADR-016 (observabilidad/recuperación).
 
 **Criterios de aceptación:**
-- `ARCHITECTURE.md`, `DATA_MODEL.md`, `API_CONTRACTS.md`, `SECURITY.md`,
+- [x] `ARCHITECTURE.md`, `DATA_MODEL.md`, `API_CONTRACTS.md`, `SECURITY.md`,
   `IMPLEMENTATION_PLAN.md` y `DECISIONS.md` actualizados.
-- Sin contradicciones entre documentos.
-- Riesgos y plan ejecutable documentados.
+- [x] Sin contradicciones entre documentos.
+- [x] Riesgos y plan ejecutable documentados.
+- [x] Diagramas de instalación y actualización definidos.
 
-**Dependencias:** confirmación de la instancia PostgreSQL
+**Pendiente de insumo:** instancia PostgreSQL existente
 ([`POSTGRES_EXISTING_INSTANCE.md`](./POSTGRES_EXISTING_INSTANCE.md)).
 
 ## 4. Fase 2 — Diseño y estructura base
@@ -52,13 +55,16 @@ de la siguiente.
 **Objetivo:** esqueleto de frontend y backend que arranca sin tocar
 infraestructura real.
 
-**Frontend:** SvelteKit+TS, Tailwind, componentes base, navegación
-desktop/móvil, estados de UI, accesibilidad.
+**Frontend:** SvelteKit+TS, Tailwind, tokens de marca (Apple HIG), componentes
+base, navegación adaptable (barra lateral/pestañas), estados de UI,
+accesibilidad y tema claro/oscuro.
 **Backend:** FastAPI modular, config por entorno, esquema SQLAlchemy y Alembic
 configurado (sin migrar a prod), `/healthz` y `/readyz`, OpenAPI, `.env.example`.
+**Agente:** esqueleto del servicio `agent/` en modo `simulated`, con contrato de
+operaciones tipadas y autenticación (token) — aún sin tocar Docker real.
 
 **Criterios de aceptación:**
-- Proyecto arranca en local.
+- Proyecto (web, api, agente simulado) arranca en local.
 - Lint, typecheck y pruebas en verde (reportar resultados reales).
 - **No** se conecta a Docker real ni se modifica PostgreSQL existente.
 - README actualizado.
@@ -83,18 +89,18 @@ vencimiento.
 **Objetivo:** gestión lógica de instalaciones (sin aprovisionamiento real).
 
 **Tareas:** entidades separadas (cliente, suscripción, EVA, instalación,
-servicio, dominio, base de datos, config, referencia a secretos); detección de
-conflicto de dominio; metadatos de BD sin credenciales; contrato del agente +
-adaptador simulado.
+servicio, dominio, base de datos, config, referencia a secretos); **registro de
+la base de negocio por cliente** (ADR-012) sin exponer credenciales; detección de
+conflicto de dominio; contrato del agente + integración con el servicio.
 
 **Criterios de aceptación:**
 - Pruebas de aislamiento, conflicto de dominio, idempotencia y errores.
-- El adaptador simulado indica claramente que **no** hubo cambios reales.
+- El agente en modo `simulated` indica claramente que **no** hubo cambios reales.
 - Sin exponer credenciales.
 
 ## 7. Fase 5 — Monitoreo Docker y actualizaciones
 
-**Objetivo:** monitoreo y actualizaciones con adaptador simulado.
+**Objetivo:** monitoreo y actualizaciones con el agente en modo `simulated`.
 
 **Tareas:** estado/healthcheck/versiones/métricas; historial de eventos y logs
 saneados; operaciones por rol (restart, upgrade, health-check, backup/restore);
@@ -135,7 +141,7 @@ de secretos; auditoría; versiones fijas; no-root; healthchecks; rotación de lo
 | Riesgo | Impacto | Mitigación |
 |--------|---------|-----------|
 | Datos insuficientes de la instancia PG | Bloquea conexión | Inspección segura + confirmación ([doc](./POSTGRES_EXISTING_INSTANCE.md)) |
-| Agente de operaciones inexistente | Bloquea ops reales | Adaptador simulado en MVP |
+| Agente real requiere revisión de seguridad | Riesgo de exposición Docker | Modo `simulated` por defecto; modo `real` tras autorización |
 | Decisiones ADR abiertas | Retrabajo | Resolver en Fase 1 |
 | Aislamiento multi-tenant | Seguridad | Pruebas obligatorias + revisión |
 | Exposición de secretos | Crítico | Revisión + tooling + `.env` fuera de Git |

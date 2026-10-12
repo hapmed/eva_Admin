@@ -11,7 +11,7 @@
 |---------|-----------|
 | Estilo | REST sobre HTTP/JSON |
 | Versionado | Prefijo `/api/v1` |
-| Autenticación | A decidir ([`DECISIONS.md`](./DECISIONS.md#adr-009)) |
+| Autenticación | Dual (ADR-009): cookie de sesión (SPA) + token Bearer (integraciones/agente) |
 | Paginación | `?page=1&page_size=25` con metadatos `total`, `page`, `page_size` |
 | Orden | `?sort=field` / `?sort=-field` (descendente con `-`) |
 | Filtrado | `?status=active&client_id=<uuid>` |
@@ -48,12 +48,23 @@ Códigos HTTP: `400` validación, `401` no autenticado, `403` sin permiso,
 
 ## 4. Autenticación y sesión
 
+**Web (SPA):** cookie de sesión `HttpOnly`+`Secure`+`SameSite` + token CSRF.
+
 | Método | Ruta | Descripción |
 |--------|------|-------------|
-| POST | `/auth/login` | Iniciar sesión. |
+| GET | `/auth/csrf` | Obtener token CSRF. |
+| POST | `/auth/login` | Iniciar sesión (emite cookie de sesión). |
 | POST | `/auth/logout` | Cerrar sesión. |
 | GET | `/auth/me` | Usuario actual y permisos. |
 | POST | `/auth/password/change` | Cambio de contraseña. |
+
+**Integraciones/agente (máquina-a-máquina):** token Bearer (ADR-009).
+
+| Método | Ruta | Permiso |
+|--------|------|---------|
+| GET | `/tokens` | `tokens:read` |
+| POST | `/tokens` | `tokens:manage` |
+| POST | `/tokens/{id}/revoke` | `tokens:manage` |
 
 ## 5. Usuarios internos HAPMED
 
@@ -192,7 +203,8 @@ Códigos HTTP: `400` validación, `401` no autenticado, `403` sin permiso,
 
 ## 14. Contrato con el Agente de Operaciones
 
-El backend **no** ejecuta Docker. Emite operaciones tipadas al agente:
+El backend **no** ejecuta Docker. Emite operaciones tipadas al agente —que es
+**parte de este proyecto** (ADR-007)— por un canal autenticado (token/mTLS):
 
 | Operación | Parámetros | Idempotente |
 |-----------|-----------|-------------|
@@ -204,13 +216,13 @@ El backend **no** ejecuta Docker. Emite operaciones tipadas al agente:
 | `request_restore` | `database_ref`, `backup_ref` | Sí |
 
 - Sin parámetros arbitrarios (imágenes, puertos, montajes, privilegios).
-- Requiere autorización (token/mTLS) y auditoría.
-- **En MVP:** adaptador simulado que responde sin cambios reales e indica
-  `"simulated": true`.
+- Autorización token/mTLS y auditoría por operación.
+- **Modos:** `simulated` (responde sin cambios reales e indica `"simulated": true`)
+  y `real` (requiere autorización humana y revisión de seguridad).
 
 ## 15. Pendientes de confirmación
 
-1. Método de autenticación (ADR-009).
-2. Nombres definitivos de permisos.
-3. Política de paginación/ límites de tamaño.
-4. ¿Se expone `/docs` en producción o sólo en entornos internos?
+1. Nombres definitivos de permisos.
+2. Política de paginación y límites de tamaño.
+3. ¿Se expone `/docs` en producción o sólo en entornos internos?
+4. Contrato exacto (formato/puerto) del canal backend⇄agente. [POR VERIFICAR]

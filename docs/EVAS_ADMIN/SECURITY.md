@@ -29,11 +29,15 @@
 
 ## 3. Autenticación
 
-- A decidir (ADR-009): **cookie HttpOnly** (+ CSRF) o **token Bearer**.
-- Si cookie: `HttpOnly`, `Secure` en producción, `SameSite=Lax|Strict`.
+**Dual (ADR-009):**
+
+- **Web (SPA):** cookie de sesión `HttpOnly`, `Secure` en producción,
+  `SameSite=Lax|Strict`, más **token CSRF** en operaciones que mutan estado.
+- **Integraciones/agente:** **token Bearer** de alcance mínimo, con expiración,
+  rotación y revocación. Sólo se guarda su **hash** (`API_TOKEN`).
 - Contraseñas con **hash seguro** (Argon2id o bcrypt). Nunca texto plano.
 - (Propuesta) MFA para roles administrativos. [PROPUESTA]
-- Bloqueo/limitación tras intentos fallidos.
+- Bloqueo/limitación tras intentos fallidos; rate limiting en `/auth/*`.
 
 ## 4. Autorización
 
@@ -47,18 +51,26 @@
 
 ## 5. Aislamiento multi-tenant
 
+- **Una base de datos por cliente** (ADR-012): aísla los datos de negocio a
+  nivel de base, no sólo de fila. La base administrativa (`evas_admin`) guarda
+  sólo metadatos.
 - Toda entidad de negocio lleva `client_id` y se filtra en cada consulta.
+- El backend resuelve la conexión por cliente desde el gestor de secretos;
+  nunca se expone al frontend.
 - Los usuarios de cliente sólo acceden a su propia empresa.
 - Se requieren **pruebas automáticas de aislamiento** entre clientes.
 
 ## 6. Seguridad de Docker
 
 - **Nunca** se monta `/var/run/docker.sock` en `API` ni en `FE`.
-- Sólo el **Agente de Operaciones** accede a Docker, con:
+- Sólo el **Agente de Operaciones** (componente propio del proyecto, ADR-007)
+  accede a Docker, con:
   - Operaciones tipadas y enumeradas.
+  - Acceso acotado a recursos con label `evas.managed_by`.
   - Sin imágenes, puertos, montajes ni privilegios arbitrarios.
-  - Autorización (token/mTLS) y auditoría por acción.
-- **MVP:** adaptador simulado (no ejecuta cambios reales).
+  - Autenticación (token/mTLS con el backend) y auditoría por acción.
+- **Modos:** `simulated` (no ejecuta cambios reales; local/MVP) y `real`
+  (autorización humana + revisión de seguridad).
 - Sin `privileged`, sin capacidades innecesarias ([`DOCKER_STANDARD.md`](./DOCKER_STANDARD.md)).
 
 ## 7. Red y transporte
@@ -67,7 +79,8 @@
 - **CORS** restringido a orígenes configurados.
 - **Rate limiting** en rutas sensibles (`/auth/*`, operaciones).
 - Exposición mínima de puertos; superficies internas sin publicar.
-- Publicación vía Cloudflare Tunnel [PROPUESTA] ([`DECISIONS.md`](./DECISIONS.md#adr-010)).
+- Publicación vía Cloudflare Tunnel (ADR-010); sin tokens de Cloudflare en el
+  código ni en la imagen.
 
 ## 8. Gestión de secretos
 
@@ -107,7 +120,8 @@ restore, y cambios de dominio/configuración.
 
 ## 13. Pendientes de confirmación
 
-1. Método de autenticación (cookie+CSRF vs token). (ADR-009)
-2. ¿MFA obligatorio para superadmin? [PROPUESTA]
-3. Gestor de secretos definitivo (env vs Vault/Secrets Manager). [POR VERIFICAR]
-4. Canal y política de notificación de incidentes.
+1. ¿MFA obligatorio para superadmin? [PROPUESTA]
+2. Gestor de secretos definitivo (env vs Vault/Secrets Manager) y mapa de
+   conexiones por cliente. [POR VERIFICAR]
+3. Canal y política de notificación de incidentes.
+4. Mecanismo exacto del canal backend⇄agente (mTLS vs token). [POR VERIFICAR]

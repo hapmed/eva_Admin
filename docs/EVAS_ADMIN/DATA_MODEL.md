@@ -229,6 +229,14 @@ sensible), `size_bytes`.
 `id`, `installation_service_id` FK, `metric_type` (`cpu`/`ram`), `value`,
 `captured_at`.
 
+### 3.6 Integraciones y tokens
+
+**API_TOKEN** (acceso máquina-a-máquina; ADR-009)
+`id`, `name`, `owner_type` (`integration`/`agent`), `scopes` (lista de permisos),
+`token_hash` (hash; **nunca** el valor en claro), `status`
+(`active`/`revoked`), `last_used_at`, `expires_at`, `created_at`.
+> Sólo se almacena el **hash** del token. La rotación y revocación se auditan.
+
 ## 4. Reglas de aislamiento multi-tenant
 
 - Toda consulta de entidades de negocio incluye filtro por `client_id`.
@@ -238,8 +246,17 @@ sensible), `size_bytes`.
 
 ## 5. Estrategia de aislamiento de datos de negocio
 
-[POR VERIFICAR] — Opciones y decisión pendiente en [`DECISIONS.md`](./DECISIONS.md#adr-012--estrategia-de-aislamiento-de-datos-de-negocio-por-cliente).
-La base administrativa de EVAS **siempre** está separada de las bases de negocio.
+**Confirmado (ADR-012):** **una base de datos por cliente** (PostgreSQL),
+independiente entre clientes y de la base administrativa de EVAS.
+
+- La base administrativa (`evas_admin`) guarda **sólo metadatos**.
+- Cada cliente tiene su propia base de negocio; el backend resuelve su conexión
+  por cliente desde el gestor de secretos.
+- La base administrativa de EVAS **siempre** está separada de las bases de
+  negocio. No se crean bases reales sin autorización
+  ([`POSTGRES_EXISTING_INSTANCE.md`](./POSTGRES_EXISTING_INSTANCE.md)).
+- Gestión de conexiones (pooling), roles, respaldos y límites por base se
+  detallan en [`OPERATIONS.md`](./OPERATIONS.md) y [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 
 ## 6. Índices y rendimiento (propuesta)
 
@@ -251,7 +268,7 @@ La base administrativa de EVAS **siempre** está separada de las bases de negoci
 
 ## 7. Pendientes de confirmación
 
-1. ¿Base por cliente, esquema por cliente o `tenant_id` compartido? (ADR-012)
-2. ¿`CLIENT_USER` accede al panel o es sólo entidad de negocio? (ADR-009)
-3. Moneda/impuestos de `PLAN` (fuera de alcance en MVP).
-4. Política de retención de auditoría y métricas.
+1. ¿`CLIENT_USER` accede al panel o es sólo entidad de negocio?
+2. Moneda/impuestos de `PLAN` (fuera de alcance en MVP).
+3. Política de retención de auditoría y métricas.
+4. Convención de nombres físicos de las bases de negocio por cliente. [POR VERIFICAR]

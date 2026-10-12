@@ -53,7 +53,7 @@ Ver [`POSTGRES_EXISTING_INSTANCE.md`](./POSTGRES_EXISTING_INSTANCE.md). La
 ## 5. Volúmenes y persistencia
 
 - Volúmenes con nombre por instalación; nunca `bind` a rutas sensibles del host.
-- Datos de negocio separados por cliente (según ADR-012, [POR VERIFICAR]).
+- Datos de negocio en **una base por cliente** (ADR-012).
 - Sin montar `/var/run/docker.sock` en contenedores de aplicación.
 - Política de backup definida por instalación ([`OPERATIONS.md`](./OPERATIONS.md)).
 
@@ -80,11 +80,13 @@ services:
     depends_on: [api]
     restart: unless-stopped
 
-  # agent: sólo si el agente real está autorizado (MVP: adaptador simulado fuera de Docker o mock)
-  # agent:
-  #   build: ../agent
-  #   restart: unless-stopped
-  #   # NUNCA en MVP: montar /var/run/docker.sock
+  agent:
+    build: ../agent
+    env_file: [../.env]
+    networks: [evas_admin_net]
+    restart: unless-stopped
+    # Modo simulated por defecto. En modo real: montar el socket Docker SOLO aquí,
+    # con permisos mínimos y tras revisión de seguridad (ADR-007).
 
 networks:
   evas_admin_net:
@@ -107,11 +109,14 @@ networks:
 
 ## 9. Agente de Operaciones
 
-- Servicio separado con **operaciones tipadas** y permisos mínimos.
+- **Componente propio de este proyecto** (`agent/`), en su contenedor del
+  Compose (ADR-007).
+- Operaciones **tipadas** y permisos mínimos.
 - No acepta imágenes, montajes, puertos ni privilegios arbitrarios.
 - Acceso a Docker acotado a recursos etiquetados con `evas.managed_by`.
-- Autorización por token/mTLS y auditoría por operación.
-- **MVP:** adaptador simulado que no realiza cambios reales.
+- Autenticación por token/mTLS y auditoría por operación.
+- **Modos:** `simulated` (sin cambios reales; local/MVP) y `real` (autorización
+  humana + revisión de seguridad).
 
 ## 10. Actualizaciones y rollback
 
@@ -122,7 +127,7 @@ networks:
 
 ## 11. Pendientes de confirmación
 
-1. Proxy/túnel definitivo y estrategia de TLS. (ADR-010)
+1. Estrategia de TLS y exposición vía Cloudflare Tunnel (ADR-010).
 2. ¿Un contenedor por servicio o varios? [POR VERIFICAR]
 3. Registro de imágenes (registry) privado y credenciales. [POR VERIFICAR]
-4. ¿Existe ya un agente de operaciones? (ADR-007)
+4. Contrato exacto del canal backend⇄agente (mTLS vs token). [POR VERIFICAR]

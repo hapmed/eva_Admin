@@ -36,7 +36,7 @@ los clientes finales.
   catálogo de EVA, planes, suscripciones, instalaciones, dominios y metadatos de
   bases de datos.
 - Dashboard con resumen operativo.
-- Monitoreo **con adaptador simulado** en la primera iteración.
+- Monitoreo **con el agente en modo `simulated`** en la primera iteración.
 - Auditoría de operaciones administrativas.
 - Interfaz responsive (móvil, tablet, escritorio).
 
@@ -58,7 +58,7 @@ los clientes finales.
 | ORM / migraciones | SQLAlchemy + Alembic | [CONFIRMADO] |
 | Base administrativa | PostgreSQL (instancia **existente**) | [CONFIRMADO] |
 | Despliegue de apps | Docker Compose en Linux | [CONFIRMADO] |
-| Publicación | Preparado para Cloudflare Tunnel | [PROPUESTA] |
+| Publicación | Cloudflare Tunnel | [CONFIRMADO] |
 | UI | Responsive móvil/tablet/PC | [CONFIRMADO] |
 | Lenguaje de diseño | Apple HIG (skill `apple-design-skill`) + marca HAPMED | [PROPUESTA] |
 
