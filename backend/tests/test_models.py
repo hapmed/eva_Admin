@@ -31,5 +31,6 @@ def test_expected_tables_registered():
         "metrics",
         "backups",
         "alert_states",
+        "webauthn_credentials",
     }
     assert expected <= tables

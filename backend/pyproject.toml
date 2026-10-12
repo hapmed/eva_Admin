@@ -13,6 +13,7 @@ dependencies = [
   "alembic>=1.13",
   "python-multipart>=0.0.9",
   "psycopg[binary]>=3.2",
+  "webauthn>=2.5",
 ]
 
 [dependency-groups]

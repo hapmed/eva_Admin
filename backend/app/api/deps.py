@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 from app.core.auth import AuthContext
 from app.core.config import get_settings
 from app.core.security import hash_token
-from app.core.session import verify_session_token
+from app.core.session import read_token
 from app.db.session import get_db
 from app.models.token import ApiToken
 from app.models.user import HapmedUser
@@ -44,11 +44,14 @@ def _cookie_context(request: Request, db: Session) -> AuthContext | None:
     raw = request.cookies.get(settings.session_cookie_name)
     if not raw:
         return None
-    user_id = verify_session_token(raw)
+    claims = read_token(raw)
+    if not claims:
+        return None
+    user_id = claims.get("sub")
     if not user_id:
         return None
     try:
-        user = db.get(HapmedUser, uuid.UUID(user_id))
+        user = db.get(HapmedUser, uuid.UUID(str(user_id)))
     except ValueError:
         return None
     if user is None or not user.is_active:
@@ -59,6 +62,7 @@ def _cookie_context(request: Request, db: Session) -> AuthContext | None:
         actor_id=str(user.id),
         method="cookie",
         permissions=permissions,
+        passkey_name=claims.get("wa"),
     )
 
 

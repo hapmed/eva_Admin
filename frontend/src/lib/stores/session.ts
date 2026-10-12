@@ -7,6 +7,8 @@ export type SessionUser = {
 	full_name: string;
 	roles: string[];
 	permissions: string[];
+	passkey_name?: string | null;
+	has_passkeys?: boolean;
 };
 
 export const sessionUser = writable<SessionUser | null>(null);

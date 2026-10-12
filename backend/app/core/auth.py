@@ -9,3 +9,4 @@ class AuthContext:
     actor_id: str
     method: str  # cookie | bearer
     permissions: set[str] = field(default_factory=set)
+    passkey_name: str | None = None

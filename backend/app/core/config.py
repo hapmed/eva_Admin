@@ -51,6 +51,10 @@ class Settings(BaseSettings):
     # Agente de operaciones
     agent_mode: str = Field(default="simulated", description="simulated | real")
 
+    # WebAuthn / passkeys (RP ID por dominio del host; override opcional)
+    webauthn_rp_name: str = "EVAS Admin"
+    webauthn_rp_id: str = ""
+
     # Administrador inicial (bootstrap). Sólo se usa para crear el primer usuario.
     bootstrap_admin_email: str = ""
     bootstrap_admin_password: str = ""

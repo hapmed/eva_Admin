@@ -15,7 +15,8 @@
 		"format": "prettier --write ."
 	},
 	"dependencies": {
-		"@lucide/svelte": "^1.55.0"
+		"@lucide/svelte": "^1.55.0",
+		"@simplewebauthn/browser": "^14.0.0"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-node": "^6.0.0",

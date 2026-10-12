@@ -1,14 +1,38 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { KeyRound } from '@lucide/svelte';
 	import Button from '#lib/components/Button.svelte';
+	import { sessionUser } from '../../lib/stores/session';
 	import { login } from '../../lib/stores/session';
+	import { conditionalPasskeyLogin, loginWithPasskey, webAuthnSupported } from '../../lib/webauthn';
 
 	let email = $state('');
 	let password = $state('');
 	let message = $state<string | null>(null);
 	let saving = $state(false);
+	let passkeyBusy = $state(false);
+	let canPasskey = $state(false);
 
 	const inputClass = 'min-h-11 w-full rounded-[12px] border border-line bg-bg px-3';
+
+	function isCancel(error: unknown): boolean {
+		return error instanceof DOMException && error.name === 'NotAllowedError';
+	}
+
+	async function onPasskey() {
+		passkeyBusy = true;
+		message = null;
+		try {
+			const user = await loginWithPasskey();
+			sessionUser.set(user);
+			await goto('/');
+		} catch (error) {
+			if (!isCancel(error)) message = 'No se pudo iniciar sesión con passkey.';
+		} finally {
+			passkeyBusy = false;
+		}
+	}
 
 	async function onSubmit(event: SubmitEvent) {
 		event.preventDefault();
@@ -22,6 +46,21 @@
 			await goto('/');
 		}
 	}
+
+	onMount(async () => {
+		canPasskey = webAuthnSupported();
+		if (!canPasskey) return;
+		try {
+			// Sugerencia de passkey vía autocompletado (si el dispositivo la tiene).
+			const user = await conditionalPasskeyLogin();
+			if (user) {
+				sessionUser.set(user);
+				await goto('/');
+			}
+		} catch {
+			/* el usuario no eligió passkey o no hay: se ignora */
+		}
+	});
 </script>
 
 <div class="mx-auto flex min-h-[80vh] max-w-sm flex-col justify-center">
@@ -35,14 +74,27 @@
 		<h1 class="mt-6 text-[20px] font-semibold">Iniciar sesión</h1>
 		<p class="mt-1 text-[14px] text-ink-2">Panel de administración EVAS.</p>
 
-		<form class="mt-5 flex flex-col gap-3" onsubmit={onSubmit}>
+		{#if canPasskey}
+			<button
+				type="button"
+				class="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[12px] bg-accent px-4 text-[15px] font-medium text-white hover:opacity-90"
+				disabled={passkeyBusy}
+				onclick={onPasskey}
+			>
+				<KeyRound size={18} aria-hidden="true" />
+				{passkeyBusy ? 'Esperando passkey…' : 'Entrar con passkey'}
+			</button>
+			<p class="mt-2 text-center text-[12px] text-ink-3">o usa tu contraseña</p>
+		{/if}
+
+		<form class="mt-3 flex flex-col gap-3" onsubmit={onSubmit}>
 			<label class="flex flex-col gap-1 text-[14px]">
 				<span>Correo</span>
 				<input
 					type="email"
 					bind:value={email}
 					required
-					autocomplete="username"
+					autocomplete="username webauthn"
 					class={inputClass}
 				/>
 			</label>
@@ -56,8 +108,8 @@
 					class={inputClass}
 				/>
 			</label>
-			<Button type="submit" variant="primary" disabled={saving}>
-				{saving ? 'Entrando…' : 'Entrar'}
+			<Button type="submit" variant="secondary" disabled={saving}>
+				{saving ? 'Entrando…' : 'Entrar con contraseña'}
 			</Button>
 		</form>
 

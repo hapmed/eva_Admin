@@ -10,7 +10,8 @@ import {
 	LayoutDashboard,
 	ScrollText,
 	Server,
-	Users
+	Users,
+	UserCog
 } from '@lucide/svelte';
 
 export type NavItem = { href: string; label: string; icon: Component };
@@ -40,7 +41,8 @@ export const navGroups: NavGroup[] = [
 		label: 'Administración',
 		items: [
 			{ href: '/usuarios', label: 'Usuarios internos', icon: Users },
-			{ href: '/auditoria', label: 'Auditoría', icon: ScrollText }
+			{ href: '/auditoria', label: 'Auditoría', icon: ScrollText },
+			{ href: '/cuenta', label: 'Cuenta', icon: UserCog }
 		]
 	}
 ];

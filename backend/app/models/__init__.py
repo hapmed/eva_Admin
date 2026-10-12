@@ -21,6 +21,7 @@ from app.models.monitoring import AlertState, Backup, HealthCheck, Metric
 from app.models.subscription import Plan, Subscription, SubscriptionEvent
 from app.models.token import ApiToken
 from app.models.user import HapmedUser, Permission, Role, role_permissions, user_roles
+from app.models.webauthn import WebAuthnCredential
 
 __all__ = [
     "AlertState",
@@ -47,6 +48,7 @@ __all__ = [
     "SecretReference",
     "Subscription",
     "SubscriptionEvent",
+    "WebAuthnCredential",
     "role_permissions",
     "user_roles",
 ]
