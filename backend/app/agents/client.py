@@ -30,6 +30,8 @@ class OperationsAgent(Protocol):
 
     def get_metrics(self, installation_id: str) -> dict[str, Any]: ...
 
+    def get_host_stats(self) -> dict[str, Any]: ...
+
 
 class SimulatedAgent:
     mode = "simulated"
@@ -64,6 +66,27 @@ class SimulatedAgent:
 
     def get_metrics(self, installation_id: str) -> dict[str, Any]:
         return {"simulated": True, "samples": []}
+
+    def get_host_stats(self) -> dict[str, Any]:
+        return {
+            "simulated": True,
+            "cpu_percent": 0.0,
+            "cpu_count": 0,
+            "mem_total": 0.0,
+            "mem_used": 0.0,
+            "mem_percent": 0.0,
+            "disk_total": 0.0,
+            "disk_used": 0.0,
+            "disk_percent": 0.0,
+            "load1": 0.0,
+            "load5": 0.0,
+            "load15": 0.0,
+            "uptime_seconds": 0.0,
+            "net_rx_bytes": 0.0,
+            "net_tx_bytes": 0.0,
+            "net_rx_rate": 0.0,
+            "net_tx_rate": 0.0,
+        }
 
 
 class HttpAgent:
@@ -116,6 +139,17 @@ class HttpAgent:
 
     def get_metrics(self, installation_id: str) -> dict[str, Any]:
         return {"simulated": False, "samples": []}
+
+    def get_host_stats(self) -> dict[str, Any]:
+        import httpx
+
+        response = httpx.get(
+            f"{self._base_url}/v1/host/stats",
+            headers={"Authorization": f"Bearer {self._token}"},
+            timeout=30,
+        )
+        response.raise_for_status()
+        return response.json()
 
 
 def get_agent() -> OperationsAgent:

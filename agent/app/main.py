@@ -7,6 +7,7 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from app.audit import record
 from app.auth import require_token
 from app.config import get_settings
+from app.host import host_stats
 from app.operations import OperationRequest, OperationResult, execute
 
 logging.basicConfig(level=logging.INFO)
@@ -22,6 +23,11 @@ app = FastAPI(
 def healthz() -> dict[str, str]:
     settings = get_settings()
     return {"status": "ok", "mode": settings.agent_mode}
+
+
+@app.get("/v1/host/stats", dependencies=[Depends(require_token)], summary="Métricas del servidor")
+def host_stats_route() -> dict:
+    return host_stats()
 
 
 @app.post(
