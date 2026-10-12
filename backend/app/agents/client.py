@@ -84,7 +84,9 @@ class HttpAgent:
             timeout=120,
         )
         response.raise_for_status()
-        return response.json()
+        payload = response.json()
+        # El agente responde {"type","status","simulated","data"}; devolvemos el payload.
+        return payload.get("data", payload)
 
     def deploy_installation(self, spec: dict[str, Any]) -> dict[str, Any]:
         params = dict(spec)
