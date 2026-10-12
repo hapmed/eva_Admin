@@ -87,10 +87,14 @@ class HttpAgent:
         return response.json()
 
     def deploy_installation(self, spec: dict[str, Any]) -> dict[str, Any]:
-        return self._call("deploy_installation", str(spec.get("installation_id", "")), spec)
+        params = dict(spec)
+        installation_id = str(params.pop("installation_id", ""))
+        return self._call("deploy_installation", installation_id, params)
 
     def upgrade_installation(self, spec: dict[str, Any]) -> dict[str, Any]:
-        return self._call("upgrade_installation", str(spec.get("installation_id", "")), spec)
+        params = dict(spec)
+        installation_id = str(params.pop("installation_id", ""))
+        return self._call("upgrade_installation", installation_id, params)
 
     def remove_installation(self, installation_id: str) -> dict[str, Any]:
         return self._call("remove_installation", installation_id, {})
