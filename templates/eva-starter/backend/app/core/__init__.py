@@ -1,0 +1,1 @@
+"""Core: configuración y logging."""

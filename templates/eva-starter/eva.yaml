@@ -1,0 +1,43 @@
+# Manifiesto de la EVA (contrato con EVAS Admin). Sin secretos.
+# Ver docs/EVAS_APPS/REQUISITOS_EVA.md y MANIFEST_EJEMPLO.yaml
+
+code: mi-eva                       # identificador ESTABLE (no cambiar)
+name: Mi EVA
+description: Descripción breve de la aplicación.
+image: ghcr.io/hapmed/eva-mi-eva   # repositorio de la imagen (sin tag)
+
+versions:
+  - version: "0.1.0"
+    status: approved
+
+port: 8000
+healthcheck: /healthz
+
+config_schema:
+  properties:
+    locale:
+      type: string
+  required:
+    - locale
+
+env:
+  - EVAS_EVA_CODE
+  - EVAS_INSTALLATION_ID
+  - EVAS_CLIENT_REF
+  - EVAS_VERSION
+  - DATABASE_URL
+  - PORT
+
+secrets:
+  - key: DB_PASSWORD
+    provider: env
+
+migrate: "alembic upgrade head"
+
+labels:
+  evas.managed_by: evas-admin
+  evas.eva_code: mi-eva
+
+resources:
+  cpu: "0.5"
+  memory: "512Mi"

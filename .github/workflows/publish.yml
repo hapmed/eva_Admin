@@ -8,6 +8,7 @@ on:
       - "**.md"
       - "prompts/**"
       - "brand/**"
+      - "templates/**"
   workflow_dispatch:
 
 permissions:

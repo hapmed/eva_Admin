@@ -1,0 +1,35 @@
+# Compose de desarrollo de la EVA (sin servicio PostgreSQL productivo).
+# Uso: cp .env.example .env && docker compose -f ops/compose.yaml up --build
+
+name: eva-starter
+
+services:
+  api:
+    build: ../backend
+    env_file: [../.env]
+    networks: [eva_net]
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request;urllib.request.urlopen('http://localhost:8000/healthz')"
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  web:
+    build: ../frontend
+    environment:
+      PORT: "3000"
+      HOST: "0.0.0.0"
+    networks: [eva_net]
+    depends_on: [api]
+    restart: unless-stopped
+
+networks:
+  eva_net:
+    driver: bridge
