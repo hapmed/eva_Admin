@@ -1,0 +1,70 @@
+# EVAS Admin — Compose para el VPS (producción).
+#
+# Usa la red externa `apps-net` para alcanzar el contenedor PostgreSQL
+# existente (host `postgres`), que NO se gestiona desde aquí (ADR-004).
+# No declara ningún servicio PostgreSQL.
+#
+# Uso: docker compose -f ops/compose.prod.yaml build
+#      docker compose -f ops/compose.prod.yaml up -d
+
+name: evas-admin
+
+services:
+  api:
+    build:
+      context: ../backend
+    env_file: [../.env]
+    networks: [evas_admin_net, apps-net]
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request;urllib.request.urlopen('http://localhost:8000/healthz')"
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  web:
+    build:
+      context: ../frontend
+    env_file: [../.env]
+    environment:
+      PORT: "3000"
+      HOST: "0.0.0.0"
+    networks: [evas_admin_net]
+    depends_on: [api]
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  agent:
+    build:
+      context: ../agent
+    env_file: [../.env]
+    networks: [evas_admin_net]
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Modo simulated por defecto. En modo real, montar el socket Docker SÓLO aquí,
+    # con permisos mínimos y tras revisión de seguridad (ADR-007).
+
+networks:
+  evas_admin_net:
+    driver: bridge
+  apps-net:
+    external: true
