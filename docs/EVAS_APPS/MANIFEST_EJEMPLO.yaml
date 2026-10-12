@@ -1,0 +1,56 @@
+# Manifiesto de ejemplo de una EVA (contrato con EVAS Admin).
+# Este archivo describe la app; NO contiene secretos.
+
+code: cotizaciones
+name: Cotizaciones y Propuestas
+description: Gestión de cotizaciones, clientes y propuestas comerciales.
+image: ghcr.io/hapmed/eva-cotizaciones
+
+# Solo las versiones 'approved' se despliegan. Se registran en EVAS Admin.
+versions:
+  - version: "1.0.0"
+    status: approved
+  - version: "1.1.0"
+    status: approved
+  - version: "0.9.0"
+    status: deprecated
+
+port: 8000
+healthcheck: /healthz
+
+# Subconjunto de JSON Schema: se valida la configuración del cliente.
+config_schema:
+  properties:
+    locale:
+      type: string
+    items_per_page:
+      type: integer
+    branding:
+      type: string
+  required:
+    - locale
+
+# Variables de entorno que la plataforma inyecta (nombres).
+env:
+  - EVAS_EVA_CODE
+  - EVAS_INSTALLATION_ID
+  - EVAS_CLIENT_REF
+  - EVAS_VERSION
+  - DATABASE_URL
+  - PORT
+
+# Referencias a secretos (se inyectan como variables; el valor nunca aquí).
+secrets:
+  - key: DB_PASSWORD
+    provider: env
+
+# Comando de migración de base de datos (idempotente).
+migrate: "alembic upgrade head"
+
+labels:
+  evas.managed_by: evas-admin
+  evas.eva_code: cotizaciones
+
+resources:
+  cpu: "0.5"
+  memory: "512Mi"
