@@ -1,4 +1,8 @@
-"""Interfaz y adaptador simulado del agente de operaciones."""
+"""Cliente del agente de operaciones.
+
+Interfaz tipada hacia el agente (ADR-007). En esta fase sólo existe el adaptador
+`SimulatedAgent`, que NO realiza cambios reales.
+"""
 
 from typing import Any, Protocol
 
@@ -8,36 +12,54 @@ class OperationsAgent(Protocol):
 
     mode: str
 
-    def health_check(self, installation_id: str) -> dict[str, Any]: ...
-
-    def restart_service(self, installation_id: str, service_name: str) -> dict[str, Any]: ...
+    def deploy_installation(
+        self, installation_id: str, eva_version: str, domain: str | None
+    ) -> dict[str, Any]: ...
 
     def upgrade_installation(self, installation_id: str, target_version: str) -> dict[str, Any]: ...
 
+    def restart_service(self, installation_id: str, service_name: str) -> dict[str, Any]: ...
+
+    def health_check(self, installation_id: str) -> dict[str, Any]: ...
+
+    def request_backup(self, database_ref: str) -> dict[str, Any]: ...
+
+    def request_restore(self, database_ref: str, backup_ref: str) -> dict[str, Any]: ...
+
 
 class SimulatedAgent:
-    """Adaptador de Fase 2: nunca toca Docker real."""
+    """Adaptador: nunca toca Docker real. Marca `simulated: True`."""
 
     mode = "simulated"
 
-    def health_check(self, installation_id: str) -> dict[str, Any]:
-        return {"simulated": True, "installation_id": installation_id, "status": "unknown"}
+    def deploy_installation(
+        self, installation_id: str, eva_version: str, domain: str | None
+    ) -> dict[str, Any]:
+        return {
+            "simulated": True,
+            "installation_id": installation_id,
+            "eva_version": eva_version,
+            "domain": domain,
+        }
+
+    def upgrade_installation(self, installation_id: str, target_version: str) -> dict[str, Any]:
+        return {"simulated": True, "installation_id": installation_id, "target_version": target_version}
 
     def restart_service(self, installation_id: str, service_name: str) -> dict[str, Any]:
         return {
             "simulated": True,
-            "accepted": True,
             "installation_id": installation_id,
             "service_name": service_name,
         }
 
-    def upgrade_installation(self, installation_id: str, target_version: str) -> dict[str, Any]:
-        return {
-            "simulated": True,
-            "accepted": True,
-            "installation_id": installation_id,
-            "target_version": target_version,
-        }
+    def health_check(self, installation_id: str) -> dict[str, Any]:
+        return {"simulated": True, "installation_id": installation_id, "status": "unknown"}
+
+    def request_backup(self, database_ref: str) -> dict[str, Any]:
+        return {"simulated": True, "database_ref": database_ref, "location_ref": None}
+
+    def request_restore(self, database_ref: str, backup_ref: str) -> dict[str, Any]:
+        return {"simulated": True, "database_ref": database_ref, "backup_ref": backup_ref}
 
 
 def get_agent() -> OperationsAgent:

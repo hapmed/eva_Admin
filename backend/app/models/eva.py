@@ -16,6 +16,8 @@ class EvaProduct(IdMixin, TimestampMixin, Base):
     name: Mapped[str] = mapped_column(String(160))
     description: Mapped[str] = mapped_column(String(500), default="")
     status: Mapped[str] = mapped_column(String(20), default="active", nullable=False)
+    # Esquema de configuración permitido (props/requeridos). Nunca secretos.
+    config_schema: Mapped[dict] = mapped_column(JSON, default=dict)
 
     versions: Mapped[list["EvaVersion"]] = relationship(
         back_populates="product", cascade="all, delete-orphan"

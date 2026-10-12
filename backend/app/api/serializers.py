@@ -72,6 +72,7 @@ def eva_out(eva: EvaProduct) -> dict:
         "name": eva.name,
         "description": eva.description,
         "status": eva.status,
+        "config_schema": eva.config_schema or {},
         "versions": [
             eva_version_out(version) for version in sorted(eva.versions, key=lambda item: item.created_at)
         ],
@@ -115,4 +116,84 @@ def subscription_event_out(event: SubscriptionEvent) -> dict:
         "to_status": event.to_status,
         "notes": event.notes,
         "occurred_at": event.occurred_at,
+    }
+
+
+def node_out(node) -> dict:
+    return {
+        "id": str(node.id),
+        "name": node.name,
+        "host_ref": node.host_ref,
+        "environment": node.environment,
+        "status": node.status,
+    }
+
+
+def service_out(service) -> dict:
+    return {
+        "id": str(service.id),
+        "service_name": service.service_name,
+        "container_ref": service.container_ref,
+        "image_ref": service.image_ref,
+        "status": service.status,
+        "health_status": service.health_status,
+        "last_checked_at": service.last_checked_at,
+    }
+
+
+def secret_ref_out(reference) -> dict:
+    return {"key": reference.key, "provider": reference.provider}
+
+
+def installation_out(installation, secrets: list) -> dict:
+    return {
+        "id": str(installation.id),
+        "client_id": str(installation.client_id),
+        "eva_product_id": str(installation.eva_product_id),
+        "subscription_id": str(installation.subscription_id) if installation.subscription_id else None,
+        "node_id": str(installation.node_id) if installation.node_id else None,
+        "environment": installation.environment,
+        "status": installation.status,
+        "desired_version": installation.desired_version,
+        "installed_version": installation.installed_version,
+        "last_operation_at": installation.last_operation_at,
+        "services": [service_out(service) for service in installation.services],
+        "domains": [domain.fqdn for domain in installation.domains],
+        "secrets": [secret_ref_out(reference) for reference in secrets],
+    }
+
+
+def domain_out(domain) -> dict:
+    return {
+        "id": str(domain.id),
+        "installation_id": str(domain.installation_id),
+        "fqdn": domain.fqdn,
+        "kind": domain.kind,
+        "status": domain.status,
+    }
+
+
+def database_out(record) -> dict:
+    return {
+        "id": str(record.id),
+        "installation_id": str(record.installation_id),
+        "engine": record.engine,
+        "logical_name": record.logical_name,
+        "host_ref": record.host_ref,
+        "status": record.status,
+        "last_backup_at": record.last_backup_at,
+    }
+
+
+def operation_out(operation) -> dict:
+    return {
+        "id": str(operation.id),
+        "installation_id": str(operation.installation_id) if operation.installation_id else None,
+        "type": operation.type,
+        "status": operation.status,
+        "requested_at": operation.requested_at,
+        "finished_at": operation.finished_at,
+        "result_summary": operation.result_summary,
+        "error_code": operation.error_code,
+        "simulated": operation.simulated,
     }

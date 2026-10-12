@@ -13,7 +13,7 @@ de la siguiente.
 | 1 | Arquitectura y plan detallado | `01_*` | **Completada** |
 | 2 | Diseño responsive y estructura base | `02_*` | **Completada** |
 | 3 | Usuarios, clientes, productos y suscripciones | `03_*` | **Completada** |
-| 4 | Instalaciones, dominios y bases de datos | `04_*` | Pendiente |
+| 4 | Instalaciones, dominios y bases de datos | `04_*` | **Completada** |
 | 5 | Monitoreo Docker y actualizaciones | `05_*` | Pendiente |
 | 6 | Seguridad, contenedores y pruebas | `06_*` | Pendiente |
 | 7 | Auditoría final y entrega | `07_*` | Pendiente |
@@ -96,7 +96,7 @@ por cliente.
   Las pruebas usan SQLite en memoria; **no** se tocó el PostgreSQL existente.
 - Frontend: `svelte-check` 0 errores, `prettier --check` OK, `vite build` OK.
 
-## 6. Fase 4 — Instalaciones, dominios y bases de datos
+## 6. Fase 4 — Instalaciones, dominios y bases de datos (completada)
 
 **Objetivo:** gestión lógica de instalaciones (sin aprovisionamiento real).
 
@@ -106,9 +106,15 @@ la base de negocio por cliente** (ADR-012) sin exponer credenciales; detección 
 conflicto de dominio; contrato del agente + integración con el servicio.
 
 **Criterios de aceptación:**
-- Pruebas de aislamiento, conflicto de dominio, idempotencia y errores.
-- El agente en modo `simulated` indica claramente que **no** hubo cambios reales.
-- Sin exponer credenciales.
+- [x] Pruebas de aislamiento, conflicto de dominio, idempotencia y errores.
+- [x] El agente en modo `simulated` indica claramente que **no** hubo cambios reales.
+- [x] Sin exponer credenciales (sólo metadatos y referencias a secretos).
+- [x] Configuración validada contra el esquema permitido de cada EVA.
+
+**Resultados verificados (Fase 4):**
+- Backend: `ruff` limpio, `mypy` limpio, `pytest` **44/44**.
+- Migración `0002_provisioning` validada en modo offline; cadena `0001 -> 0002`.
+- Frontend: `svelte-check` 0 errores, `prettier --check` OK, `vite build` OK.
 
 ## 7. Fase 5 — Monitoreo Docker y actualizaciones
 

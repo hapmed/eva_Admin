@@ -30,11 +30,6 @@ def test_openapi_available():
     assert response.json()["info"]["title"]
 
 
-def test_installations_stub_returns_501():
-    response = client.get("/api/v1/installations")
-    assert response.status_code == 501
-
-
 def test_protected_endpoint_requires_auth():
     response = client.get("/api/v1/clients")
     assert response.status_code == 401

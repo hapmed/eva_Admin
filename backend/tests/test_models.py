@@ -19,5 +19,13 @@ def test_expected_tables_registered():
         "subscriptions",
         "subscription_events",
         "audit_logs",
+        "nodes",
+        "installations",
+        "installation_services",
+        "domains",
+        "database_records",
+        "installation_configs",
+        "secret_references",
+        "operations",
     }
     assert expected <= tables

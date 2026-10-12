@@ -9,12 +9,14 @@ class EvaCreate(BaseModel):
     code: str = Field(min_length=1, max_length=80)
     name: str = Field(min_length=1, max_length=160)
     description: str = Field(default="", max_length=500)
+    config_schema: dict = Field(default_factory=dict)
 
 
 class EvaUpdate(BaseModel):
     name: str | None = Field(default=None, max_length=160)
     description: str | None = Field(default=None, max_length=500)
     status: str | None = Field(default=None, pattern="^(active|deprecated)$")
+    config_schema: dict | None = None
 
 
 class EvaVersionCreate(BaseModel):
@@ -37,5 +39,6 @@ class EvaOut(BaseModel):
     name: str
     description: str
     status: str
+    config_schema: dict
     versions: list[EvaVersionOut]
     created_at: datetime

@@ -24,7 +24,12 @@ def get_eva(db: Session, eva_id: str) -> EvaProduct:
 def create_eva(db: Session, context: AuthContext, data: EvaCreate) -> EvaProduct:
     if db.scalar(select(EvaProduct).where(EvaProduct.code == data.code)):
         raise ValueError("el código de EVA ya existe")
-    eva = EvaProduct(code=data.code, name=data.name, description=data.description)
+    eva = EvaProduct(
+        code=data.code,
+        name=data.name,
+        description=data.description,
+        config_schema=data.config_schema,
+    )
     db.add(eva)
     db.flush()
     audit.record(db, context, "eva.create", "eva_product", eva.id, code=eva.code)
@@ -35,7 +40,7 @@ def create_eva(db: Session, context: AuthContext, data: EvaCreate) -> EvaProduct
 
 def update_eva(db: Session, context: AuthContext, eva_id: str, data: EvaUpdate) -> EvaProduct:
     eva = get_eva(db, eva_id)
-    for field in ("name", "description", "status"):
+    for field in ("name", "description", "status", "config_schema"):
         value = getattr(data, field)
         if value is not None:
             setattr(eva, field, value)

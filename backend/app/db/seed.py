@@ -3,6 +3,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.models.infrastructure import Node
 from app.models.user import Permission, Role
 
 PERMISSIONS: dict[str, str] = {
@@ -22,7 +23,10 @@ PERMISSIONS: dict[str, str] = {
     "installations:write": "Gestionar instalaciones",
     "installations:operate": "Operar instalaciones",
     "installations:upgrade": "Actualizar instalaciones",
+    "domains:read": "Ver dominios",
+    "domains:write": "Gestionar dominios",
     "databases:read": "Ver metadatos de bases de datos",
+    "databases:write": "Gestionar metadatos de bases de datos",
     "backups:request": "Solicitar copias de seguridad",
     "backups:restore": "Solicitar restauración",
     "operations:read": "Ver operaciones y registros",
@@ -49,7 +53,10 @@ ROLE_DEFINITIONS: dict[str, tuple[str, set[str]]] = {
             "installations:write",
             "installations:operate",
             "installations:upgrade",
+            "domains:read",
+            "domains:write",
             "databases:read",
+            "databases:write",
             "backups:request",
             "operations:read",
             "audit:read",
@@ -80,4 +87,7 @@ def seed(session: Session) -> None:
             role = Role(code=code, name=name, is_system=True)
             session.add(role)
         role.permissions = [permissions[perm_code] for perm_code in sorted(codes)]
+
+    if session.scalar(select(Node).limit(1)) is None:
+        session.add(Node(name="default", host_ref="local", environment="local", status="active"))
     session.commit()
