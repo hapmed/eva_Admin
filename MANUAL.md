@@ -56,10 +56,20 @@ Guía sencilla de uso. Para detalles técnicos, ver [`docs/EVAS_ADMIN/`](docs/EV
 2. Elige **Cliente** y **Plan** → **Crear**.
 3. En la tabla puedes **Renovar** o **Cancelar**. La fecha de vencimiento se calcula sola.
 
-### 3.5 Montar una instalación
-1. **Instalaciones → “Nueva instalación”**.
-2. Elige **Cliente**, **EVA**, **Versión** y (opcional) **Dominio principal** → **Crear**.
-3. Aparecerá con estado y versión. El botón **Actualizar** sube a otra versión aprobada.
+### 3.5 Montar una instalación (aprovisiona de verdad)
+1. **Instalaciones → “Nueva instalación”**: Cliente, EVA, Versión y **Dominio principal** → **Crear**.
+2. Al crearla, la plataforma **crea automáticamente**:
+   - una **base de datos** PostgreSQL propia del cliente;
+   - el **contenedor** Docker de la EVA (publicado en `127.0.0.1`, accesible por el túnel);
+   - el **DNS + ruta del túnel** (`https://<dominio>`) para el dominio indicado.
+3. La instalación queda **activa**; con **Actualizar** subes de versión y en **Monitoreo → Detalle**
+   ves logs y métricas.
+
+> El **catálogo EVA** debe tener `Imagen Docker`, `Puerto interno` y `Ruta de salud`
+> (se definen al crear la EVA).
+
+### 3.6 Renovar / cancelar una suscripción
+1. **Suscripciones**: en la fila pulsa **Renovar** o **Cancelar**.
 
 ### 3.6 Registrar su base de datos
 1. **Bases de datos → “Registrar base de datos”**: elige la **Instalación**, un `Nombre lógico` y el `Nodo` → **Registrar**.
@@ -130,6 +140,30 @@ docker compose -f ops/compose.prod.yaml run --rm --no-deps api python -m app.cli
 ```bash
 systemctl list-timers 'hapmed-*' --no-pager
 ```
+
+### 5.1 Aprovisionamiento (base de datos + contenedores + DNS)
+
+También en `/opt/apps/eva_admin/.env`, bloque de aprovisionamiento real:
+
+```dotenv
+EVAS_PROVISION_ENABLED=true
+EVAS_PROVISION_DB_HOST=postgres
+EVAS_PROVISION_DB_ADMIN_USER=<usuario_admin_postgres>
+EVAS_PROVISION_DB_ADMIN_PASSWORD=<clave_admin_postgres>
+EVAS_PROVISION_DB_ADMIN_DB=postgres
+EVAS_PORT_RANGE_START=9100
+EVAS_PORT_RANGE_END=9199
+EVAS_EVA_NETWORK=apps-net
+
+# Cloudflare (publicar dominios de clientes)
+EVAS_PUBLIC_DOMAIN_SUFFIX=hapmed.qzz.io
+EVAS_CLOUDFLARE_API_TOKEN=<token_con_Tunnel_y_DNS_Edit>
+EVAS_CLOUDFLARE_ACCOUNT_ID=<account_id>
+EVAS_CLOUDFLARE_ZONE_ID=<zone_id>
+EVAS_CLOUDFLARE_TUNNEL_ID=<tunnel_id>
+```
+
+Con esto, **crear una instalación crea la BD, el contenedor y el DNS/túnel** solos.
 
 ---
 
