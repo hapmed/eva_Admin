@@ -27,7 +27,7 @@ class OperationType(StrEnum):
 
 class OperationRequest(BaseModel):
     type: OperationType
-    installation_id: str = Field(min_length=1)
+    installation_id: str = ""
     params: dict[str, Any] = Field(default_factory=dict)
     idempotency_key: str | None = None
 
