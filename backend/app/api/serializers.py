@@ -190,6 +190,19 @@ def database_out(record) -> dict:
     }
 
 
+def backup_out(backup) -> dict:
+    return {
+        "id": str(backup.id),
+        "database_record_id": str(backup.database_record_id),
+        "type": backup.type,
+        "status": backup.status,
+        "started_at": backup.started_at,
+        "finished_at": backup.finished_at,
+        "location_ref": backup.location_ref,
+        "size_bytes": backup.size_bytes,
+    }
+
+
 def operation_out(operation) -> dict:
     return {
         "id": str(operation.id),

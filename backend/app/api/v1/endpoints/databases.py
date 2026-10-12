@@ -5,10 +5,11 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import AuthContext, require_permission
 from app.api.errors import http_error
-from app.api.serializers import database_out, operation_out
+from app.api.serializers import backup_out, database_out, operation_out
 from app.core.rate_limit import rate_limit
 from app.db.session import get_db
 from app.schemas.installation import (
+    BackupOut,
     DatabaseCreate,
     DatabaseOut,
     OperationOut,
@@ -73,6 +74,19 @@ def backup_database(
     return operation_out(operation)
 
 
+@router.get("/{database_id}/backups", response_model=list[BackupOut])
+def list_backups(
+    database_id: str,
+    _: AuthContext = Depends(require_permission("databases:read")),
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    try:
+        backups = database_service.list_backups(db, database_id)
+    except (ValueError, LookupError) as exc:
+        raise http_error(exc) from exc
+    return [backup_out(backup) for backup in backups]
+
+
 @router.post(
     "/{database_id}/restore", response_model=OperationOut, dependencies=[Depends(rate_limit("operations"))]
 )
@@ -84,7 +98,7 @@ def restore_database(
 ) -> dict:
     try:
         operation = database_service.request_restore(
-            db, context, database_id, data.backup_ref, data.idempotency_key
+            db, context, database_id, data.backup_ref, data.idempotency_key, data.confirm
         )
     except (ValueError, LookupError) as exc:
         raise http_error(exc) from exc

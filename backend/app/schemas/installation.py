@@ -133,3 +133,15 @@ class DatabaseOut(BaseModel):
 
 class RestoreRequest(OperationRequest):
     backup_ref: str = Field(min_length=1, max_length=200)
+    confirm: str = Field(default="", max_length=120)
+
+
+class BackupOut(BaseModel):
+    id: str
+    database_record_id: str
+    type: str
+    status: str
+    started_at: datetime | None
+    finished_at: datetime | None
+    location_ref: str | None
+    size_bytes: int | None

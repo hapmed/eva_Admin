@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     docker_host: str = "unix:///var/run/docker.sock"
     managed_label: str = "evas.managed_by"
     eva_network: str = "apps-net"
+    # Carpeta (montada del host) donde se guardan los respaldos.
+    backup_dir: str = "/backups"
+    postgres_container: str = "postgres"
     # Rutas del host montadas de solo lectura para métricas del servidor.
     host_proc: str = "/host/proc"
     host_root: str = "/host"

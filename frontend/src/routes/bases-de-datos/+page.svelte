@@ -18,6 +18,13 @@
 		status: string;
 		last_backup_at: string | null;
 	};
+	type Backup = {
+		id: string;
+		status: string;
+		started_at: string | null;
+		location_ref: string | null;
+		size_bytes: number | null;
+	};
 
 	let databases = $state<Database[]>([]);
 	let installations = $state<Installation[]>([]);
@@ -25,15 +32,18 @@
 	let evas = $state<Eva[]>([]);
 	let loading = $state(true);
 	let error = $state<string | null>(null);
+	let info = $state<string | null>(null);
 
 	let showCreate = $state(false);
 	let saving = $state(false);
 	let formError = $state<string | null>(null);
 	let form = $state({ installation_id: '', logical_name: '', host_ref: '' });
 
-	let restoreFor = $state<Database | null>(null);
-	let restoreOpen = $state(false);
-	let backupRef = $state('');
+	let backupsFor = $state<Database | null>(null);
+	let backupsOpen = $state(false);
+	let backups = $state<Backup[]>([]);
+	let backupsLoading = $state(false);
+	let restoreConfirm = $state('');
 
 	const inputClass = 'min-h-11 rounded-[12px] border border-line bg-bg px-3';
 
@@ -52,6 +62,11 @@
 			last_backup_text: database.last_backup_at ? database.last_backup_at.slice(0, 10) : 'Nunca'
 		}))
 	);
+
+	function fmtSize(bytes: number | null): string {
+		if (!bytes) return '—';
+		return `${(bytes / 1024 ** 2).toFixed(2)} MB`;
+	}
 
 	async function load() {
 		loading = true;
@@ -86,30 +101,48 @@
 	}
 
 	async function backup(database: Database) {
+		info = null;
+		error = null;
 		try {
 			await api.post(`/databases/${database.id}/backup`, { idempotency_key: crypto.randomUUID() });
+			info = `Copia solicitada para ${database.logical_name}.`;
 			await load();
+			if (backupsFor?.id === database.id) await loadBackups(database);
 		} catch (err) {
 			error = err instanceof ApiError ? err.message : 'Error en la copia de seguridad';
 		}
 	}
 
-	function openRestore(database: Database) {
-		restoreFor = database;
-		backupRef = '';
-		restoreOpen = true;
+	async function openBackups(database: Database) {
+		backupsFor = database;
+		backupsOpen = true;
+		restoreConfirm = '';
+		await loadBackups(database);
 	}
 
-	async function doRestore() {
-		if (!restoreFor) return;
+	async function loadBackups(database: Database) {
+		backupsLoading = true;
+		try {
+			backups = await api.get<Backup[]>(`/databases/${database.id}/backups`);
+		} catch (err) {
+			error = err instanceof ApiError ? err.message : 'Error al cargar copias';
+		} finally {
+			backupsLoading = false;
+		}
+	}
+
+	async function restore(backup: Backup) {
+		if (!backupsFor) return;
 		saving = true;
 		formError = null;
 		try {
-			await api.post(`/databases/${restoreFor.id}/restore`, {
-				backup_ref: backupRef,
+			await api.post(`/databases/${backupsFor.id}/restore`, {
+				backup_ref: backup.id,
+				confirm: restoreConfirm,
 				idempotency_key: crypto.randomUUID()
 			});
-			restoreOpen = false;
+			backupsOpen = false;
+			info = `Restauración solicitada para ${backupsFor.logical_name}.`;
 		} catch (err) {
 			formError = err instanceof ApiError ? err.message : 'Error en la restauración';
 		} finally {
@@ -120,23 +153,27 @@
 	onMount(load);
 </script>
 
-<PageHeader title="Bases de datos" subtitle="Metadatos por instalación (sin credenciales)">
+<PageHeader title="Bases de datos" subtitle="Metadatos, copias de seguridad y restauración">
 	{#snippet actions()}
 		<Button variant="primary" onclick={() => (showCreate = true)}>Registrar base de datos</Button>
 	{/snippet}
 </PageHeader>
 
+{#if error}
+	<p class="mt-4 text-[14px] text-danger" role="alert">{error}</p>
+{/if}
+{#if info}
+	<p class="mt-4 text-[14px] text-success" role="status">{info}</p>
+{/if}
+
 {#if loading}
 	<p class="mt-6 text-[15px] text-ink-2">Cargando…</p>
-{:else if error}
-	<p class="mt-6 text-[15px] text-danger" role="alert">{error}</p>
 {:else}
 	<div class="mt-6">
 		<DataTable
 			columns={[
 				{ key: 'logical_name', label: 'Nombre lógico' },
 				{ key: 'engine', label: 'Motor' },
-				{ key: 'host_ref', label: 'Nodo' },
 				{ key: 'last_backup_text', label: 'Última copia' },
 				{ key: 'installation_text', label: 'Instalación' }
 			]}
@@ -147,7 +184,7 @@
 			{#snippet actions(row)}
 				<div class="flex justify-end gap-1">
 					<Button variant="ghost" onclick={() => backup(row as Database)}>Backup</Button>
-					<Button variant="ghost" onclick={() => openRestore(row as Database)}>Restaurar</Button>
+					<Button variant="ghost" onclick={() => openBackups(row as Database)}>Copias</Button>
 				</div>
 			{/snippet}
 		</DataTable>
@@ -183,21 +220,51 @@
 	{/snippet}
 </Modal>
 
-<Modal bind:open={restoreOpen} title="Restaurar base de datos">
+<Modal bind:open={backupsOpen} title={`Copias · ${backupsFor?.logical_name ?? ''}`}>
 	<div class="flex flex-col gap-3 text-[14px]">
-		<p class="text-ink-2">
-			La restauración es una operación sensible. En modo simulado no realiza cambios reales.
-		</p>
-		<label class="flex flex-col gap-1">
-			<span>Referencia de copia</span>
-			<input class={inputClass} bind:value={backupRef} placeholder="backup-2026-10-11" />
-		</label>
+		<Button variant="secondary" onclick={() => backupsFor && backup(backupsFor)}
+			>Hacer copia ahora</Button
+		>
+		{#if backupsLoading}
+			<p class="text-ink-2">Cargando…</p>
+		{:else if backups.length === 0}
+			<p class="text-ink-2">No hay copias todavía.</p>
+		{:else}
+			<ul class="divide-y divide-line">
+				{#each backups as backup (backup.id)}
+					<li class="flex items-center justify-between py-2">
+						<div>
+							<p class="font-medium">{backup.started_at?.slice(0, 19).replace('T', ' ') ?? '—'}</p>
+							<p class="text-[12px] text-ink-2">{backup.status} · {fmtSize(backup.size_bytes)}</p>
+						</div>
+					</li>
+				{/each}
+			</ul>
+			<div class="mt-2 rounded-[12px] bg-surface-2 p-3">
+				<p class="mb-2 text-[13px] text-ink-2">
+					Restaurar es sensible. Escribe el nombre de la base (<strong
+						>{backupsFor?.logical_name}</strong
+					>) y pulsa Restaurar.
+				</p>
+				<div class="flex gap-2">
+					<input
+						class={`${inputClass} flex-1`}
+						bind:value={restoreConfirm}
+						placeholder={backupsFor?.logical_name ?? ''}
+					/>
+					<Button
+						variant="danger"
+						disabled={saving || restoreConfirm !== backupsFor?.logical_name}
+						onclick={() => backups[0] && restore(backups[0])}
+					>
+						Restaurar la más reciente
+					</Button>
+				</div>
+			</div>
+		{/if}
 		{#if formError}<p class="text-[13px] text-danger" role="alert">{formError}</p>{/if}
 	</div>
 	{#snippet footer()}
-		<Button variant="secondary" onclick={() => (restoreOpen = false)}>Cancelar</Button>
-		<Button variant="danger" disabled={saving} onclick={doRestore}
-			>{saving ? 'Solicitando…' : 'Restaurar'}</Button
-		>
+		<Button variant="secondary" onclick={() => (backupsOpen = false)}>Cerrar</Button>
 	{/snippet}
 </Modal>

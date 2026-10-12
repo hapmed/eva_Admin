@@ -5,6 +5,10 @@ Solo opera sobre recursos **gestionados** por EVAS Admin (label
 un *spec* tipado; backup/restore quedan explícitamente no soportados.
 """
 
+import io
+import os
+import tarfile
+import time
 from datetime import UTC, datetime
 from typing import Any
 
@@ -186,9 +190,88 @@ class RealDockerDriver:
             ],
         }
 
-    # --- Respaldos (pendiente: flujo autorizado del host) ---
+    # --- Respaldos (pg_dump/pg_restore vía el contenedor PostgreSQL) ---
+    def _postgres(self):
+        return self._client.containers.get(self._settings.postgres_container)
+
+    def _postgres_user(self) -> str:
+        for entry in self._postgres().attrs["Config"].get("Env", []):
+            if entry.startswith("POSTGRES_USER="):
+                return entry.split("=", 1)[1]
+        return "postgres"
+
     def request_backup(self, database_ref: str) -> dict[str, Any]:
-        raise RuntimeError("backup real no habilitado: usa el timer de respaldos del host")
+        container = self._postgres()
+        user = self._postgres_user()
+        target_dir = os.path.join(self._settings.backup_dir, database_ref)
+        os.makedirs(target_dir, exist_ok=True)
+        timestamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+        filename = f"{database_ref}_{timestamp}.dump"
+        path = os.path.join(target_dir, filename)
+
+        result = container.exec_run(["sh", "-c", f'pg_dump -U "{user}" -Fc "{database_ref}"'])
+        if result.exit_code != 0:
+            raise RuntimeError("fallo pg_dump")
+        with open(path, "wb") as handle:
+            handle.write(result.output)
+        return {
+            "simulated": False,
+            "database_ref": database_ref,
+            "location_ref": f"{database_ref}/{filename}",
+            "size_bytes": len(result.output),
+        }
 
     def request_restore(self, database_ref: str, backup_ref: str) -> dict[str, Any]:
-        raise RuntimeError("restore real no habilitado: usa el flujo autorizado del host")
+        container = self._postgres()
+        user = self._postgres_user()
+        source = os.path.join(self._settings.backup_dir, backup_ref)
+        if not os.path.exists(source):
+            raise RuntimeError("copia de seguridad no encontrada")
+
+        # Snapshot previo de seguridad.
+        self.request_backup(database_ref)
+
+        with open(source, "rb") as handle:
+            data = handle.read()
+        name = os.path.basename(backup_ref)
+        buffer = io.BytesIO()
+        with tarfile.open(fileobj=buffer, mode="w") as tar:
+            info = tarfile.TarInfo(name=name)
+            info.size = len(data)
+            tar.addfile(info, io.BytesIO(data))
+        buffer.seek(0)
+        container.put_archive("/tmp", buffer)
+
+        container.exec_run(
+            [
+                "psql",
+                "-U",
+                user,
+                "-d",
+                "postgres",
+                "-c",
+                f"SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
+                f"WHERE datname='{database_ref}' AND pid <> pg_backend_pid()",
+            ]
+        )
+        result = container.exec_run(
+            [
+                "pg_restore",
+                "-U",
+                user,
+                "--clean",
+                "--if-exists",
+                "--no-owner",
+                "--dbname",
+                database_ref,
+                f"/tmp/{name}",
+            ]
+        )
+        if result.exit_code not in (0, 1):
+            raise RuntimeError("fallo pg_restore")
+        return {
+            "simulated": False,
+            "database_ref": database_ref,
+            "backup_ref": backup_ref,
+            "restored": True,
+        }
