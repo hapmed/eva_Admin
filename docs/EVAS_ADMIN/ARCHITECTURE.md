@@ -1,7 +1,7 @@
 # ARCHITECTURE.md — Arquitectura de EVAS Admin
 
-**Estado:** Aprobada en Fase 1. Estructura base implementada en Fase 2
-(backend, frontend y agente en modo `simulated`). Decisiones clave cerradas
+**Estado:** Aprobada en Fase 1. Estructura base (Fase 2) y módulos de identidad
+y comercial (Fase 3) implementados. Decisiones clave cerradas
 (ver [`DECISIONS.md`](./DECISIONS.md)).
 **Documentos relacionados:** [`DATA_MODEL.md`](./DATA_MODEL.md),
 [`API_CONTRACTS.md`](./API_CONTRACTS.md), [`SECURITY.md`](./SECURITY.md),

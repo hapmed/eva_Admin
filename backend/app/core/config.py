@@ -5,6 +5,7 @@ ejemplo. Los valores reales llegan por entorno o gestor de secretos.
 """
 
 from functools import lru_cache
+from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -23,7 +24,7 @@ class Settings(BaseSettings):
     debug: bool = False
     api_v1_prefix: str = "/api/v1"
 
-    # Base administrativa (instancia PostgreSQL existente). Fase 2 NO conecta.
+    # Base administrativa (instancia PostgreSQL existente).
     db_host: str = "localhost"
     db_port: int = 5432
     db_name: str = "evas_admin"
@@ -31,10 +32,13 @@ class Settings(BaseSettings):
     db_password: str = "change-me-in-env"
     db_sslmode: str = "prefer"
 
-    # Sesión web (cookie)
+    # Sesión web (cookie firmada) y CSRF
+    secret_key: str = "change-me-session-secret"
     session_cookie_name: str = "evas_session"
+    csrf_cookie_name: str = "evas_csrf"
+    session_ttl_minutes: int = 720
     session_cookie_secure: bool = True
-    session_cookie_samesite: str = "lax"
+    session_cookie_samesite: Literal["lax", "strict", "none"] = "lax"
 
     # CORS: orígenes permitidos (vacío = ninguno).
     cors_origins: list[str] = Field(default_factory=list)
@@ -42,9 +46,12 @@ class Settings(BaseSettings):
     # Agente de operaciones
     agent_mode: str = Field(default="simulated", description="simulated | real")
 
+    # Administrador inicial (bootstrap). Sólo se usa para crear el primer usuario.
+    bootstrap_admin_email: str = ""
+    bootstrap_admin_password: str = ""
+
     @property
     def database_url(self) -> str:
-        """DSN de la base administrativa. No se usa en Fase 2."""
         return (
             f"postgresql+psycopg://{self.db_user}:{self.db_password}"
             f"@{self.db_host}:{self.db_port}/{self.db_name}?sslmode={self.db_sslmode}"

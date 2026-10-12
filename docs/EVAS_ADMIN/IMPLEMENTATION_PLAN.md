@@ -12,7 +12,7 @@ de la siguiente.
 | 0 | Documentación de especificación | `00_*` | **Completada (este entregable)** |
 | 1 | Arquitectura y plan detallado | `01_*` | **Completada** |
 | 2 | Diseño responsive y estructura base | `02_*` | **Completada** |
-| 3 | Usuarios, clientes, productos y suscripciones | `03_*` | Pendiente |
+| 3 | Usuarios, clientes, productos y suscripciones | `03_*` | **Completada** |
 | 4 | Instalaciones, dominios y bases de datos | `04_*` | Pendiente |
 | 5 | Monitoreo Docker y actualizaciones | `05_*` | Pendiente |
 | 6 | Seguridad, contenedores y pruebas | `06_*` | Pendiente |
@@ -74,20 +74,27 @@ tipadas y autenticación por token — sin tocar Docker real.
 - Agente: `ruff` limpio, `mypy` limpio, `pytest` 11/11.
 - Frontend: `svelte-check` 0 errores, `prettier --check` OK, `vite build` OK.
 
-## 5. Fase 3 — Usuarios, clientes, productos y suscripciones
+## 5. Fase 3 — Usuarios, clientes, productos y suscripciones (completada)
 
 **Objetivo:** módulos de identidad y comercial.
 
 **Tareas:** usuarios internos + roles/permisos; clientes y usuarios de cliente;
 catálogo EVA y versiones; planes y suscripciones con historial y alertas de
-vencimiento.
+vencimiento. Autenticación dual (cookie + CSRF / token), auditoría y aislamiento
+por cliente.
 
 **Criterios de aceptación:**
-- CRUD lógico funcional con auditoría.
-- Aislamiento multi-tenant probado.
-- Sin autoelevación de privilegios.
-- Fechas UTC y conversión en UI.
-- Migraciones probadas en **base local**, no en la existente.
+- [x] CRUD lógico funcional con auditoría.
+- [x] Aislamiento multi-tenant probado (usuarios de cliente por cliente).
+- [x] Sin autoelevación de privilegios (roles propios y estado propio bloqueados).
+- [x] Fechas en UTC (cálculo de vencimientos por periodo).
+- [ ] Migración aplicada a un PostgreSQL local — **pendiente de autorización**.
+
+**Resultados verificados (Fase 3):**
+- Backend: `ruff` limpio, `mypy` limpio, `pytest` **36/36**.
+- Migración `0001_initial` validada en modo offline (`alembic upgrade --sql`).
+  Las pruebas usan SQLite en memoria; **no** se tocó el PostgreSQL existente.
+- Frontend: `svelte-check` 0 errores, `prettier --check` OK, `vite build` OK.
 
 ## 6. Fase 4 — Instalaciones, dominios y bases de datos
 

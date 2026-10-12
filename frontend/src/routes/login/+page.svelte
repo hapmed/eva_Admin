@@ -1,13 +1,26 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import Button from '#lib/components/Button.svelte';
+	import { login } from '../../lib/stores/session';
 
 	let email = $state('');
 	let password = $state('');
-	let message = $state('');
+	let message = $state<string | null>(null);
+	let saving = $state(false);
 
-	function onSubmit(event: SubmitEvent) {
+	const inputClass = 'min-h-11 rounded-[12px] border border-line bg-bg px-3';
+
+	async function onSubmit(event: SubmitEvent) {
 		event.preventDefault();
-		message = 'La autenticación se habilita en la Fase 3.';
+		saving = true;
+		message = null;
+		const error = await login(email, password);
+		saving = false;
+		if (error) {
+			message = error;
+		} else {
+			await goto('/');
+		}
 	}
 </script>
 
@@ -28,7 +41,7 @@
 					bind:value={email}
 					required
 					autocomplete="username"
-					class="min-h-11 rounded-[12px] border border-line bg-bg px-3"
+					class={inputClass}
 				/>
 			</label>
 			<label class="flex flex-col gap-1 text-[14px]">
@@ -38,14 +51,16 @@
 					bind:value={password}
 					required
 					autocomplete="current-password"
-					class="min-h-11 rounded-[12px] border border-line bg-bg px-3"
+					class={inputClass}
 				/>
 			</label>
-			<Button type="submit" variant="primary">Entrar</Button>
+			<Button type="submit" variant="primary" disabled={saving}>
+				{saving ? 'Entrando…' : 'Entrar'}
+			</Button>
 		</form>
 
 		{#if message}
-			<p role="status" class="mt-3 text-[13px] text-ink-2">{message}</p>
+			<p role="alert" class="mt-3 text-[13px] text-danger">{message}</p>
 		{/if}
 	</div>
 </div>

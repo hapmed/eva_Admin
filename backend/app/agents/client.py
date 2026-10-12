@@ -12,9 +12,7 @@ class OperationsAgent(Protocol):
 
     def restart_service(self, installation_id: str, service_name: str) -> dict[str, Any]: ...
 
-    def upgrade_installation(
-        self, installation_id: str, target_version: str
-    ) -> dict[str, Any]: ...
+    def upgrade_installation(self, installation_id: str, target_version: str) -> dict[str, Any]: ...
 
 
 class SimulatedAgent:
@@ -33,9 +31,7 @@ class SimulatedAgent:
             "service_name": service_name,
         }
 
-    def upgrade_installation(
-        self, installation_id: str, target_version: str
-    ) -> dict[str, Any]:
+    def upgrade_installation(self, installation_id: str, target_version: str) -> dict[str, Any]:
         return {
             "simulated": True,
             "accepted": True,

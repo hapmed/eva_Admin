@@ -13,5 +13,11 @@ def test_expected_tables_registered():
         "clients",
         "client_users",
         "api_tokens",
+        "eva_products",
+        "eva_versions",
+        "plans",
+        "subscriptions",
+        "subscription_events",
+        "audit_logs",
     }
     assert expected <= tables

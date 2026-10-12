@@ -9,9 +9,7 @@ def test_defaults_are_fictitious():
 
 
 def test_database_url_shape():
-    settings = Settings(
-        db_host="h", db_port=5432, db_user="u", db_password="p", db_name="d"
-    )
+    settings = Settings(db_host="h", db_port=5432, db_user="u", db_password="p", db_name="d")
     url = settings.database_url
     assert url.startswith("postgresql+psycopg://")
     assert url.endswith("/d?sslmode=prefer")

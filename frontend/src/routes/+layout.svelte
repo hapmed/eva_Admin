@@ -1,11 +1,15 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { Menu, X } from '@lucide/svelte';
-	import NavList from '#lib/components/NavList.svelte';
-	import ThemeToggle from '#lib/components/ThemeToggle.svelte';
+	import NavList from '../lib/components/NavList.svelte';
+	import ThemeToggle from '../lib/components/ThemeToggle.svelte';
+	import { loadSession, logout, sessionUser } from '../lib/stores/session';
 	import '../app.css';
 
 	let { children } = $props();
 	let mobileOpen = $state(false);
+
+	onMount(loadSession);
 </script>
 
 <div class="min-h-dvh lg:grid lg:grid-cols-[264px_1fr]">
@@ -35,7 +39,19 @@
 				<img src="/brand/logo-mark.png" alt="" class="h-7 w-7" />
 				<span class="text-[15px] font-bold tracking-[0.18em]">HAPMED</span>
 			</div>
-			<div class="ml-auto"><ThemeToggle /></div>
+			<div class="ml-auto flex items-center gap-2">
+				{#if $sessionUser}
+					<span class="hidden text-[14px] text-ink-2 sm:inline">{$sessionUser.email}</span>
+					<button
+						type="button"
+						class="inline-flex h-11 items-center rounded-[12px] px-3 text-[14px] text-ink hover:bg-surface-2"
+						onclick={() => logout()}
+					>
+						Salir
+					</button>
+				{/if}
+				<ThemeToggle />
+			</div>
 		</header>
 		<main class="mx-auto w-full max-w-[1080px] flex-1 px-4 py-6 sm:px-6 lg:px-8">
 			{@render children()}

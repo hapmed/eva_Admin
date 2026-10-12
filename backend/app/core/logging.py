@@ -45,8 +45,6 @@ def configure_logging(level: str = "INFO") -> None:
     for handler in list(root.handlers):
         root.removeHandler(handler)
     handler = logging.StreamHandler(stream=sys.stdout)
-    handler.setFormatter(
-        logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s")
-    )
+    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s"))
     handler.addFilter(_redaction_filter)
     root.addHandler(handler)
