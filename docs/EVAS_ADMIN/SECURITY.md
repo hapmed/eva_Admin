@@ -1,0 +1,113 @@
+# SECURITY.md — Seguridad de EVAS Admin
+
+**Estado:** Borrador inicial.
+**Documentos relacionados:** [`ARCHITECTURE.md`](./ARCHITECTURE.md),
+[`DOCKER_STANDARD.md`](./DOCKER_STANDARD.md),
+[`POSTGRES_EXISTING_INSTANCE.md`](./POSTGRES_EXISTING_INSTANCE.md).
+
+## 1. Principios
+
+1. **Mínimo privilegio** en personas, servicios y contenedores.
+2. **Sin secretos** en Git, logs, documentación ni respuestas de API.
+3. **Operaciones tipadas.** Nunca shell arbitrario desde HTTP.
+4. **Aislamiento multi-tenant.** Los datos de un cliente no cruzan a otro.
+5. **Todo lo crítico se audita.**
+6. **Docker nunca expuesto** al frontend ni a la API general.
+
+## 2. Modelo de amenazas (resumen)
+
+| Amenaza | Vector | Mitigación |
+|---------|--------|-----------|
+| Ejecución arbitraria | Endpoint que invoca shell/Docker | Operaciones tipadas vía agente |
+| Exposición del socket Docker | Montaje en API/FE | Sólo el agente lo usa, con permisos mínimos |
+| Fuga de secretos | Logs, errores, Git | Logging saneado, `.env` fuera de Git, revisión |
+| Mezcla de tenants | Consultas sin `client_id` | Filtro obligatorio + pruebas de aislamiento |
+| Autoelevación | Cambio de roles por el propio usuario | Reglas de autorización server-side |
+| Fuerza bruta | Login | Rate limiting + bloqueo progresivo |
+| CSRF | Cookies de sesión | Token CSRF + SameSite ([`DECISIONS.md`](./DECISIONS.md#adr-009)) |
+| Dependencias vulnerables | Imágenes/paquetes | Versiones fijas, escaneo, sin `latest` |
+
+## 3. Autenticación
+
+- A decidir (ADR-009): **cookie HttpOnly** (+ CSRF) o **token Bearer**.
+- Si cookie: `HttpOnly`, `Secure` en producción, `SameSite=Lax|Strict`.
+- Contraseñas con **hash seguro** (Argon2id o bcrypt). Nunca texto plano.
+- (Propuesta) MFA para roles administrativos. [PROPUESTA]
+- Bloqueo/limitación tras intentos fallidos.
+
+## 4. Autorización
+
+- Basada en **permisos** asignados por rol.
+- Roles internos: `superadmin`, `operations`, `customer_care`, `read_only`.
+- Roles de cliente **separados** de los internos.
+- Verificación server-side en cada endpoint; nunca confiar en el frontend.
+- Prohibida la **autoelevación** de privilegios.
+- Operaciones destructivas (restore, upgrade, archive) requieren permiso
+  específico + confirmación + auditoría.
+
+## 5. Aislamiento multi-tenant
+
+- Toda entidad de negocio lleva `client_id` y se filtra en cada consulta.
+- Los usuarios de cliente sólo acceden a su propia empresa.
+- Se requieren **pruebas automáticas de aislamiento** entre clientes.
+
+## 6. Seguridad de Docker
+
+- **Nunca** se monta `/var/run/docker.sock` en `API` ni en `FE`.
+- Sólo el **Agente de Operaciones** accede a Docker, con:
+  - Operaciones tipadas y enumeradas.
+  - Sin imágenes, puertos, montajes ni privilegios arbitrarios.
+  - Autorización (token/mTLS) y auditoría por acción.
+- **MVP:** adaptador simulado (no ejecuta cambios reales).
+- Sin `privileged`, sin capacidades innecesarias ([`DOCKER_STANDARD.md`](./DOCKER_STANDARD.md)).
+
+## 7. Red y transporte
+
+- HTTPS obligatorio en producción.
+- **CORS** restringido a orígenes configurados.
+- **Rate limiting** en rutas sensibles (`/auth/*`, operaciones).
+- Exposición mínima de puertos; superficies internas sin publicar.
+- Publicación vía Cloudflare Tunnel [PROPUESTA] ([`DECISIONS.md`](./DECISIONS.md#adr-010)).
+
+## 8. Gestión de secretos
+
+- Secretos por **variables de entorno** o gestor de secretos documentado.
+- `.env` fuera de Git; `.env.example` con valores **ficticios**.
+- Nunca registrar contraseñas, tokens, cookies ni cadenas de conexión.
+- Los datos de negocio de clientes usan **referencias** a secretos
+  (`SECRET_REFERENCE`), no valores ([`DATA_MODEL.md`](./DATA_MODEL.md)).
+
+## 9. Logging y validación
+
+- Errores sin detalles internos ni trazas al cliente.
+- Validación estricta de entrada (Pydantic).
+- Logs estructurados y **saneados**; tamaño y retención limitados.
+- `request_id` para correlación, sin datos sensibles.
+
+## 10. Auditoría
+
+Se registran como mínimo: actor, instalación/entidad, operación, fecha y
+resultado. Operaciones auditadas: login admin, cambios de rol/permiso, alta/baja
+de clientes, cambios de suscripción, despliegue/actualización/restart, backup,
+restore, y cambios de dominio/configuración.
+
+## 11. Contenedores y dependencias
+
+- Versiones **fijas**; nunca `latest` en producción.
+- Procesos **no root** cuando sea viable.
+- Healthchecks y rotación de logs.
+- Sin `privileged` ni capacidades extra.
+
+## 12. Respuesta a incidentes (resumen)
+
+1. Contener (revocar tokens, aislar servicios).
+2. Evaluar alcance vía auditoría.
+3. Remediar y rotar secretos afectados.
+4. Documentar y actualizar este archivo. Ver [`OPERATIONS.md`](./OPERATIONS.md).
+
+## 13. Pendientes de confirmación
+
+1. Método de autenticación (cookie+CSRF vs token). (ADR-009)
+2. ¿MFA obligatorio para superadmin? [PROPUESTA]
+3. Gestor de secretos definitivo (env vs Vault/Secrets Manager). [POR VERIFICAR]
+4. Canal y política de notificación de incidentes.

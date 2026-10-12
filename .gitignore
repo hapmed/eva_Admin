@@ -1,0 +1,42 @@
+# Secretos y credenciales — NUNCA versionar ni registrar en logs
+contras.txt
+*.env
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+*.sqlite3
+*.db
+
+# Node / SvelteKit
+node_modules/
+.svelte-kit/
+build/
+dist/
+.npm/
+pnpm-debug.log*
+
+# Logs
+*.log
+logs/
+
+# SO / editores
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+
+# Docker / datos locales
+*.local
