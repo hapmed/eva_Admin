@@ -87,6 +87,30 @@ arbitrarios** del usuario.
   `request_restore`.
 - No imprimir cadenas de conexión ni credenciales.
 
+### 6.1 Usuarios de la app (convención `app_users`)
+
+EVAS Admin puede **gestionar los usuarios internos de la EVA por acceso directo
+a la base del cliente** (listar, crear, restablecer contraseña y eliminar). Para
+ello la EVA debe exponer una tabla con esta convención exacta:
+
+| Columna         | Tipo          | Notas                                        |
+|-----------------|---------------|----------------------------------------------|
+| `id`            | `uuid` PK     | Generado por EVAS Admin al crear.            |
+| `email`         | `text` unique | Identificador de inicio de sesión.           |
+| `password_hash` | `text`        | **bcrypt** (prefijo `$2`). No texto plano.   |
+| `full_name`     | `text`        | Nombre para mostrar (opcional).              |
+| `role`          | `text`        | Rol interno de la EVA (opcional).            |
+| `is_active`     | `boolean`     | Si `false`, la EVA debe impedir el acceso.   |
+| `created_at`    | `timestamptz` | Fecha de alta.                               |
+
+- La tabla se llama literalmente **`app_users`**.
+- Las contraseñas deben verificarse con **bcrypt** (`$2b$`/`$2a$`); EVAS Admin
+  escribe el hash con `bcrypt`. Si la EVA aún no define la tabla, la gestión
+  desde EVAS Admin devolverá un error claro («la EVA no expone la tabla
+  `app_users`»).
+- La EVA es **dueña** de su tabla; EVAS Admin sólo hace CRUD sobre las columnas
+  anteriores y nunca lee el `password_hash`.
+
 ## 7. Dominio
 
 - La EVA se publica en un **dominio/subdominio registrado en EVAS Admin**
@@ -141,6 +165,7 @@ arriba.
 - [ ] Escucha en `PORT`/`0.0.0.0` y expone `healthcheck` que devuelve 200.
 - [ ] Configuración y secretos por variables de entorno.
 - [ ] Base de datos PostgreSQL propia por cliente + migraciones idempotentes.
+- [ ] Tabla `app_users` (convención §6.1) para gestión de usuarios desde EVAS Admin.
 - [ ] Logs saneados a stdout; apagado ordenado.
 - [ ] Labels `evas.managed_by`, `evas.eva_code`, `evas.version`.
 - [ ] Diseño equivalente a EVAS Admin (ver [`DISENO_EVA.md`](./DISENO_EVA.md)).

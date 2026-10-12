@@ -8,6 +8,7 @@ from app.api.errors import http_error
 from app.api.serializers import installation_out, operation_out, service_out
 from app.core.rate_limit import rate_limit
 from app.db.session import get_db
+from app.schemas.eva_user import EvaUserCreate, EvaUserOut, EvaUserReset
 from app.schemas.installation import (
     InstallationCreate,
     InstallationOut,
@@ -18,7 +19,7 @@ from app.schemas.installation import (
     UpgradeRequest,
 )
 from app.schemas.monitoring import LogsOut, MetricsOut
-from app.services import installation_service, monitoring_service
+from app.services import eva_users, installation_service, monitoring_service
 
 router = APIRouter()
 
@@ -191,3 +192,57 @@ def run_health_check(
     except (ValueError, LookupError) as exc:
         raise http_error(exc) from exc
     return operation_out(operation)
+
+
+@router.get("/{installation_id}/users", response_model=list[EvaUserOut])
+def list_eva_users(
+    installation_id: str,
+    _: AuthContext = Depends(require_permission("installations:read")),
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    try:
+        return eva_users.list_users(db, installation_id)
+    except (ValueError, LookupError, RuntimeError) as exc:
+        raise http_error(exc) from exc
+
+
+@router.post("/{installation_id}/users", response_model=EvaUserOut, status_code=201)
+def create_eva_user(
+    installation_id: str,
+    data: EvaUserCreate,
+    context: AuthContext = Depends(require_permission("installations:write")),
+    db: Session = Depends(get_db),
+) -> dict:
+    try:
+        return eva_users.create_user(
+            db, context, installation_id, data.email, data.password, data.full_name, data.role
+        )
+    except (ValueError, LookupError, RuntimeError) as exc:
+        raise http_error(exc) from exc
+
+
+@router.post("/{installation_id}/users/{user_id}/reset-password", status_code=204)
+def reset_eva_user_password(
+    installation_id: str,
+    user_id: str,
+    data: EvaUserReset,
+    context: AuthContext = Depends(require_permission("installations:write")),
+    db: Session = Depends(get_db),
+) -> None:
+    try:
+        eva_users.reset_password(db, context, installation_id, user_id, data.password)
+    except (ValueError, LookupError, RuntimeError) as exc:
+        raise http_error(exc) from exc
+
+
+@router.delete("/{installation_id}/users/{user_id}", status_code=204)
+def delete_eva_user(
+    installation_id: str,
+    user_id: str,
+    context: AuthContext = Depends(require_permission("installations:write")),
+    db: Session = Depends(get_db),
+) -> None:
+    try:
+        eva_users.delete_user(db, context, installation_id, user_id)
+    except (ValueError, LookupError, RuntimeError) as exc:
+        raise http_error(exc) from exc

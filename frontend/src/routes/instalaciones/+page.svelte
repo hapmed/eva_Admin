@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import Button from '#lib/components/Button.svelte';
 	import DataTable from '#lib/components/DataTable.svelte';
+	import EvaUsersModal from '#lib/components/EvaUsersModal.svelte';
 	import Modal from '#lib/components/Modal.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import { ApiError, api } from '../../lib/api/client';
@@ -20,6 +21,7 @@
 		desired_version: string;
 		installed_version: string | null;
 		domains: string[];
+		container_name?: string;
 	};
 
 	let installations = $state<Installation[]>([]);
@@ -35,6 +37,8 @@
 
 	let upgradeFor = $state<Installation | null>(null);
 	let upgradeOpen = $state(false);
+	let usersFor = $state<Installation | null>(null);
+	let usersOpen = $state(false);
 	let upgradeVersion = $state('');
 
 	const inputClass = 'min-h-11 rounded-[12px] border border-line bg-bg px-3';
@@ -143,7 +147,16 @@
 			emptyDescription="Crea la primera instalación con el botón «Nueva instalación»."
 		>
 			{#snippet actions(row)}
-				<div class="flex justify-end">
+				<div class="flex justify-end gap-1">
+					<Button
+						variant="ghost"
+						onclick={() => {
+							usersFor = row as Installation;
+							usersOpen = true;
+						}}
+					>
+						Usuarios
+					</Button>
 					<Button variant="ghost" onclick={() => openUpgrade(row as Installation)}>
 						Actualizar
 					</Button>
@@ -220,3 +233,5 @@
 		>
 	{/snippet}
 </Modal>
+
+<EvaUsersModal bind:open={usersOpen} installation={usersFor} />
