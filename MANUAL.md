@@ -71,20 +71,24 @@ Guía sencilla de uso. Para detalles técnicos, ver [`docs/EVAS_ADMIN/`](docs/EV
 ### 3.6 Renovar / cancelar una suscripción
 1. **Suscripciones**: en la fila pulsa **Renovar** o **Cancelar**.
 
-### 3.6 Registrar su base de datos
-1. **Bases de datos → “Registrar base de datos”**: elige la **Instalación**, un `Nombre lógico` y el `Nodo` → **Registrar**.
-2. Botones **Backup** y **Restaurar** (la restauración pide confirmación).
+### 3.7 Bases de datos, copias y restauración
+1. **Bases de datos**: la instalación ya crea su base; aquí puedes registrar metadatos si hace falta.
+2. **Backup**: botón **Backup** en la fila → hace `pg_dump` real y guarda la copia en el servidor.
+3. **Copias**: botón **Copias** → lista las copias (fecha, estado, tamaño).
+4. **Restaurar**: en “Copias”, escribe el **nombre de la base** para confirmar y restaura.
+   - Antes de restaurar se hace **una copia de seguridad previa** automáticamente.
+   - Restaurar es **destructivo**: requiere permiso `backups:restore`, confirmación y auditoría.
 
-### 3.7 Ver estado de una instalación
+### 3.8 Ver estado de una instalación
 1. **Monitoreo**: lista de instalaciones.
    - **Comprobar salud** → lanza un chequeo.
    - **Detalle** → muestra servicios, **logs** y **métricas** (real, del contenedor).
 
-### 3.8 Alertas
+### 3.9 Alertas
 - **Dashboard** y **Alertas** muestran los avisos. Puedes **Reconocer** o **Resolver** cada alerta.
 - La **campana** (arriba a la derecha) muestra el número de alertas abiertas.
 
-### 3.9 Tu cuenta
+### 3.10 Tu cuenta
 - **Cuenta → Cambiar contraseña**: pide la actual y la nueva.
 - **Cuenta → Añadir passkey**: crea una passkey; se le pone un **nombre de animal** (ej. «Brave Badger») que verás junto a tu correo.
 
