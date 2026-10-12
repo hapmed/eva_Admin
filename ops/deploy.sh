@@ -32,5 +32,5 @@ git reset --hard "$REMOTE_SHA"
 COMPOSE="docker compose -f ops/compose.prod.yaml"
 $COMPOSE build
 $COMPOSE run --rm --no-deps api alembic upgrade head
-$COMPOSE up -d
+$COMPOSE up -d --force-recreate
 echo "desplegado: $(git log --oneline -1)"
