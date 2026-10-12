@@ -16,9 +16,7 @@ def require_token(authorization: str | None = Header(default=None)) -> None:
             detail="token del agente no configurado",
         )
     if not authorization or not authorization.lower().startswith("bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="falta el token"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="falta el token")
     provided = authorization[7:].strip()
     if not hmac.compare_digest(provided, expected):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="token inválido")

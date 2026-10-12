@@ -32,9 +32,7 @@ def test_validate_rejects_missing_param():
 
 
 def test_execute_simulated_marks_result():
-    request = OperationRequest(
-        type=OperationType.health_check, installation_id="i1"
-    )
+    request = OperationRequest(type=OperationType.health_check, installation_id="i1")
     result = execute(request, "simulated")
     assert result.simulated is True
     assert result.status == "accepted"

@@ -38,9 +38,7 @@ def run_operation(request: OperationRequest) -> OperationResult:
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)
         ) from exc
     except RuntimeError as exc:  # modo real no habilitado
-        raise HTTPException(
-            status_code=status.HTTP_501_NOT_IMPLEMENTED, detail=str(exc)
-        ) from exc
+        raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail=str(exc)) from exc
 
     record(request.type.value, request.installation_id, result.status, simulated=result.simulated)
     return result

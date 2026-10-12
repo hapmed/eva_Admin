@@ -16,9 +16,7 @@ class SimulatedDriver:
             "domain": domain,
         }
 
-    def upgrade_installation(
-        self, installation_id: str, target_version: str
-    ) -> dict[str, Any]:
+    def upgrade_installation(self, installation_id: str, target_version: str) -> dict[str, Any]:
         return {
             "simulated": True,
             "installation_id": installation_id,

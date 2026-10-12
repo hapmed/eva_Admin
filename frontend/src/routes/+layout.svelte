@@ -3,16 +3,18 @@
 	import { get } from 'svelte/store';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { KeyRound, Menu, X } from '@lucide/svelte';
+	import { KeyRound, Menu, X, Bell } from '@lucide/svelte';
 	import NavList from '../lib/components/NavList.svelte';
 	import ThemeToggle from '../lib/components/ThemeToggle.svelte';
 	import { loadSession, logout, sessionUser } from '../lib/stores/session';
 	import { webAuthnSupported } from '../lib/webauthn';
+	import { api } from '../lib/api/client';
 	import '../app.css';
 
 	let { children } = $props();
 	let mobileOpen = $state(false);
 	let canPasskey = $state(false);
+	let alertCount = $state(0);
 
 	const isLogin = $derived(page.url.pathname === '/login');
 
@@ -30,6 +32,15 @@
 		// Respaldo del guard SSR: si no hay sesión, ir a login.
 		if (!get(sessionUser) && !isLogin) {
 			await goto('/login');
+			return;
+		}
+		if (get(sessionUser)) {
+			try {
+				const alerts = await api.get<{ status: string }[]>('/alerts');
+				alertCount = alerts.filter((alert) => alert.status === 'open').length;
+			} catch {
+				alertCount = 0;
+			}
 		}
 	});
 </script>
@@ -66,6 +77,21 @@
 				</div>
 				<div class="ml-auto flex items-center gap-2">
 					{#if $sessionUser}
+						<a
+							href="/alertas"
+							class="relative inline-flex h-11 w-11 items-center justify-center rounded-[12px] hover:bg-surface-2"
+							aria-label="Alertas"
+							title="Alertas"
+						>
+							<Bell size={18} aria-hidden="true" />
+							{#if alertCount > 0}
+								<span
+									class="absolute right-1 top-1 min-w-4 rounded-full bg-danger px-1 text-center text-[10px] font-semibold text-white"
+								>
+									{alertCount}
+								</span>
+							{/if}
+						</a>
 						{#if $sessionUser.passkey_name}
 							<span
 								class="hidden items-center gap-1 rounded-full bg-surface-2 px-2.5 py-1 text-[12px] text-ink-2 sm:inline-flex"

@@ -9,6 +9,7 @@ dependencies = [
   "uvicorn[standard]>=0.30",
   "pydantic>=2.8",
   "pydantic-settings>=2.4",
+  "docker>=7.1",
 ]
 
 [dependency-groups]
@@ -33,3 +34,7 @@ select = ["E", "F", "I", "UP", "B"]
 addopts = "-q"
 testpaths = ["tests"]
 pythonpath = ["."]
+
+[[tool.mypy.overrides]]
+module = ["docker", "docker.*"]
+ignore_missing_imports = true

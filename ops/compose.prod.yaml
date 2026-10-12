@@ -61,6 +61,9 @@ services:
     env_file: [../.env]
     networks: [evas_admin_net]
     restart: unless-stopped
+    # Modo real: SOLO el agente accede a Docker. El socket se monta aquí y en ningún otro servicio.
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     logging:
       driver: json-file
       options:

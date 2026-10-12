@@ -50,10 +50,23 @@ class Settings(BaseSettings):
 
     # Agente de operaciones
     agent_mode: str = Field(default="simulated", description="simulated | real")
+    agent_url: str = "http://agent:8001"
+    agent_token: str = ""
 
     # WebAuthn / passkeys (RP ID por dominio del host; override opcional)
     webauthn_rp_name: str = "EVAS Admin"
     webauthn_rp_id: str = ""
+
+    # Notificaciones por email (SMTP). Deshabilitado por defecto; rellenar en prod.
+    smtp_enabled: bool = False
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from: str = "evas-admin@hapmed.local"
+    smtp_to: list[str] = Field(default_factory=list)
+    smtp_starttls: bool = True
+    smtp_ssl: bool = False
 
     # Administrador inicial (bootstrap). Sólo se usa para crear el primer usuario.
     bootstrap_admin_email: str = ""
