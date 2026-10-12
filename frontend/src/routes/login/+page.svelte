@@ -8,7 +8,7 @@
 	let message = $state<string | null>(null);
 	let saving = $state(false);
 
-	const inputClass = 'min-h-11 rounded-[12px] border border-line bg-bg px-3';
+	const inputClass = 'min-h-11 w-full rounded-[12px] border border-line bg-bg px-3';
 
 	async function onSubmit(event: SubmitEvent) {
 		event.preventDefault();
@@ -24,13 +24,15 @@
 	}
 </script>
 
-<div class="mx-auto flex min-h-[70vh] max-w-sm flex-col justify-center">
-	<div class="rounded-brand-lg border border-line bg-surface p-6">
-		<div class="flex items-center gap-2">
-			<img src="/brand/logo-mark.png" alt="" class="h-9 w-9" />
-			<span class="text-[17px] font-bold tracking-[0.18em]">HAPMED</span>
+<div class="mx-auto flex min-h-[80vh] max-w-sm flex-col justify-center">
+	<div class="rounded-brand-lg border border-line bg-surface p-6 shadow-sm">
+		<div class="flex flex-col items-center text-center">
+			<img src="/brand/logo-mark.png" alt="HAPMED" class="h-16 w-16" />
+			<span class="mt-3 text-[20px] font-bold tracking-[0.22em] text-ink">HAPMED</span>
+			<p class="mt-1 text-[13px] text-ink-2">Engineering what comes next.</p>
 		</div>
-		<h1 class="mt-4 text-[22px] font-semibold">Iniciar sesión</h1>
+
+		<h1 class="mt-6 text-[20px] font-semibold">Iniciar sesión</h1>
 		<p class="mt-1 text-[14px] text-ink-2">Panel de administración EVAS.</p>
 
 		<form class="mt-5 flex flex-col gap-3" onsubmit={onSubmit}>
