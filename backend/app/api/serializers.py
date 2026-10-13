@@ -76,6 +76,7 @@ def eva_out(eva: EvaProduct) -> dict:
         "image_repo": eva.image_repo or "",
         "container_port": eva.container_port,
         "healthcheck_path": eva.healthcheck_path or "/healthz",
+        "migrate_command": eva.migrate_command or "",
         "versions": [
             eva_version_out(version) for version in sorted(eva.versions, key=lambda item: item.created_at)
         ],

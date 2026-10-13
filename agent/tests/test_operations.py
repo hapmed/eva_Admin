@@ -21,6 +21,20 @@ def test_validate_accepts_deploy():
     validate_params(request)
 
 
+def test_validate_accepts_deploy_with_migrate():
+    request = OperationRequest(
+        type=OperationType.deploy_installation,
+        installation_id="i1",
+        params={
+            "image": "ghcr.io/hapmed/eva-x:1.0.0",
+            "name": "eva_alfa",
+            "host_port": 9100,
+            "migrate": "alembic upgrade head",
+        },
+    )
+    validate_params(request)
+
+
 def test_validate_rejects_arbitrary_param():
     request = OperationRequest(
         type=OperationType.restart_service,

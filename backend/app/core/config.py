@@ -40,6 +40,10 @@ class Settings(BaseSettings):
     session_cookie_secure: bool = True
     session_cookie_samesite: Literal["lax", "strict", "none"] = "lax"
 
+    # Cifrado de los valores de secretos por instalación (Fernet, base64 urlsafe
+    # de 32 bytes). Si está vacío se deriva de `secret_key` (no mezclar en prod).
+    secret_encryption_key: str = ""
+
     # CORS: orígenes permitidos (vacío = ninguno).
     cors_origins: list[str] = Field(default_factory=list)
 

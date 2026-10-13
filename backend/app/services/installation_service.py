@@ -28,6 +28,7 @@ from app.services import (
     monitoring_service,
     operations,
     provisioning,
+    secrets_service,
     subscription_service,
 )
 from app.services.util import as_uuid
@@ -59,6 +60,7 @@ def _image(eva: EvaProduct, version: str) -> str:
 
 
 def _service_env(
+    db: Session,
     eva: EvaProduct,
     installation: Installation,
     client_ref: str,
@@ -77,6 +79,7 @@ def _service_env(
         env["DATABASE_URL"] = database_url
     for key, value in config.items():
         env[key.upper()] = str(value)
+    env.update(secrets_service.env_for(db, installation.id))
     return env
 
 
@@ -95,7 +98,7 @@ def _service_labels(
 
 def _deploy_spec(eva: EvaProduct, installation: Installation, version: str, env: dict, labels: dict) -> dict:
     settings = get_settings()
-    return {
+    spec = {
         "installation_id": str(installation.id),
         "image": _image(eva, version),
         "name": installation.container_name,
@@ -105,6 +108,9 @@ def _deploy_spec(eva: EvaProduct, installation: Installation, version: str, env:
         "env": env,
         "labels": labels,
     }
+    if eva.migrate_command:
+        spec["migrate"] = eva.migrate_command
+    return spec
 
 
 def list_secrets(db: Session, installation_id: str) -> list[SecretReference]:
@@ -207,7 +213,7 @@ def create_installation(db: Session, context: AuthContext, data: InstallationCre
             )
         )
 
-    env = _service_env(eva, installation, str(client.id), data.desired_version, data.config, database_url)
+    env = _service_env(db, eva, installation, str(client.id), data.desired_version, data.config, database_url)
     labels = _service_labels(eva, installation, str(client.id), data.desired_version)
     spec = _deploy_spec(eva, installation, data.desired_version, env, labels)
 
@@ -275,7 +281,7 @@ def upgrade(
         )
 
     version = target_version
-    env = _service_env(eva, installation, str(installation.client_id), version, config, database_url)
+    env = _service_env(db, eva, installation, str(installation.client_id), version, config, database_url)
     labels = _service_labels(eva, installation, str(installation.client_id), version)
     spec = _deploy_spec(eva, installation, version, env, labels)
 

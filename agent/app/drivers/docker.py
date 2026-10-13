@@ -44,9 +44,13 @@ class RealDockerDriver:
         container_port = int(spec.get("container_port", 8000))
         environment = spec.get("env") or {}
         labels = spec.get("labels") or {}
+        migrate = str(spec.get("migrate") or "").strip()
 
         self._client.images.pull(image)
         self._remove_by_name(name)
+
+        if migrate:
+            self._run_migrate(image, migrate, environment, network, labels)
 
         container = self._client.containers.create(
             image=image,
@@ -65,7 +69,29 @@ class RealDockerDriver:
             "image": image,
             "container_id": container.id,
             "host_port": host_port,
+            "migrated": bool(migrate),
         }
+
+    def _run_migrate(
+        self,
+        image: str,
+        migrate: str,
+        environment: dict[str, Any],
+        network: str,
+        labels: dict[str, Any],
+    ) -> None:
+        """Ejecuta el comando de migración en un contenedor efímero (idempotente)."""
+        try:
+            self._client.containers.run(
+                image=image,
+                command=["sh", "-lc", migrate],
+                environment=environment,
+                network=network,
+                labels=labels,
+                remove=True,
+            )
+        except DockerException as exc:
+            raise RuntimeError("fallo la migración de la EVA") from exc
 
     def upgrade_installation(self, spec: dict[str, Any]) -> dict[str, Any]:
         return self.deploy_installation(spec)

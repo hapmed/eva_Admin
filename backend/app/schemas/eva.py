@@ -13,6 +13,7 @@ class EvaCreate(BaseModel):
     image_repo: str = Field(default="", max_length=200)
     container_port: int = Field(default=8000, ge=1, le=65535)
     healthcheck_path: str = Field(default="/healthz", max_length=120)
+    migrate_command: str = Field(default="", max_length=300)
 
 
 class EvaUpdate(BaseModel):
@@ -23,6 +24,7 @@ class EvaUpdate(BaseModel):
     image_repo: str | None = Field(default=None, max_length=200)
     container_port: int | None = Field(default=None, ge=1, le=65535)
     healthcheck_path: str | None = Field(default=None, max_length=120)
+    migrate_command: str | None = Field(default=None, max_length=300)
 
 
 class EvaVersionCreate(BaseModel):
@@ -49,5 +51,6 @@ class EvaOut(BaseModel):
     image_repo: str
     container_port: int
     healthcheck_path: str
+    migrate_command: str
     versions: list[EvaVersionOut]
     created_at: datetime

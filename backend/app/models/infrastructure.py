@@ -8,7 +8,17 @@ referencian por metadatos y los secretos por su ubicación (`SECRET_REFERENCE`).
 import uuid
 from datetime import datetime
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, UniqueConstraint, func
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -110,6 +120,23 @@ class SecretReference(IdMixin, TimestampMixin, Base):
     key: Mapped[str] = mapped_column(String(120))
     provider: Mapped[str] = mapped_column(String(60), default="env")
     path: Mapped[str] = mapped_column(String(200), default="")
+
+
+class InstallationSecret(IdMixin, TimestampMixin, Base):
+    """Valor de un secreto por instalación, **cifrado** (Fernet).
+
+    El valor en claro nunca se guarda ni se registra; sólo se descifra para
+    inyectarlo como variable de entorno en el despliegue.
+    """
+
+    __tablename__ = "installation_secrets"
+    __table_args__ = (UniqueConstraint("installation_id", "key", name="uq_installation_secret"),)
+
+    installation_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("installations.id", ondelete="CASCADE"), index=True
+    )
+    key: Mapped[str] = mapped_column(String(120))
+    value_encrypted: Mapped[str] = mapped_column(Text)
 
 
 class Operation(IdMixin, Base):

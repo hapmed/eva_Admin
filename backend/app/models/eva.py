@@ -22,6 +22,8 @@ class EvaProduct(IdMixin, TimestampMixin, Base):
     image_repo: Mapped[str] = mapped_column(String(200), default="")
     container_port: Mapped[int] = mapped_column(Integer, default=8000)
     healthcheck_path: Mapped[str] = mapped_column(String(120), default="/healthz")
+    # Comando de migración idempotente (p. ej. "alembic upgrade head").
+    migrate_command: Mapped[str] = mapped_column(String(300), default="")
 
     versions: Mapped[list["EvaVersion"]] = relationship(
         back_populates="product", cascade="all, delete-orphan"

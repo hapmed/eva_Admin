@@ -75,6 +75,13 @@ arbitrarios** del usuario.
 - Los **secretos** se referencian (`secret_reference`) y se inyectan como
   variables con un nombre declarado (p. ej. `DB_PASSWORD`). Nunca se guardan ni
   se muestran en claro en EVAS Admin.
+- EVAS Admin **genera** un valor por instalación y secreto declarado, lo guarda
+  **cifrado** y lo reutiliza en cada despliegue (estable entre reinicios, p. ej.
+  `JWT_SECRET`). El valor se inyecta como variable de entorno con la clave
+  exacta declarada.
+- Si el manifiesto declara `migrate`, EVAS Admin **ejecuta ese comando** en un
+  contenedor efímero con la misma imagen y entorno **antes** de arrancar la
+  instancia (idempotente). Un fallo de migración impide el despliegue.
 
 ## 6. Base de datos
 

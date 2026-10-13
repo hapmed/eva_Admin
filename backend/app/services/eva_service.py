@@ -32,6 +32,7 @@ def create_eva(db: Session, context: AuthContext, data: EvaCreate) -> EvaProduct
         image_repo=data.image_repo,
         container_port=data.container_port,
         healthcheck_path=data.healthcheck_path,
+        migrate_command=data.migrate_command,
     )
     db.add(eva)
     db.flush()
@@ -51,6 +52,7 @@ def update_eva(db: Session, context: AuthContext, eva_id: str, data: EvaUpdate) 
         "image_repo",
         "container_port",
         "healthcheck_path",
+        "migrate_command",
     ):
         value = getattr(data, field)
         if value is not None:

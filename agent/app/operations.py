@@ -11,7 +11,16 @@ from pydantic import BaseModel, Field
 
 from app.drivers.base import OperationsDriver, get_driver
 
-_DEPLOY_PARAMS = {"image", "name", "network", "host_port", "container_port", "env", "labels"}
+_DEPLOY_PARAMS = {
+    "image",
+    "name",
+    "network",
+    "host_port",
+    "container_port",
+    "env",
+    "labels",
+    "migrate",
+}
 
 
 class OperationType(StrEnum):
