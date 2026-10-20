@@ -11,6 +11,7 @@
 		legal_name: string;
 		display_name: string;
 		tax_id: string | null;
+		notes: string;
 		status: string;
 	};
 
@@ -22,6 +23,12 @@
 	let saving = $state(false);
 	let formError = $state<string | null>(null);
 	let form = $state({ legal_name: '', display_name: '', tax_id: '', notes: '' });
+
+	let editOpen = $state(false);
+	let editFor = $state<Client | null>(null);
+	let editError = $state<string | null>(null);
+	let savingEdit = $state(false);
+	let editForm = $state({ legal_name: '', display_name: '', tax_id: '', notes: '' });
 
 	const inputClass = 'min-h-11 rounded-[12px] border border-line bg-bg px-3';
 
@@ -61,6 +68,34 @@
 		}
 	}
 
+	function openEdit(client: Client) {
+		editFor = client;
+		editForm = {
+			legal_name: client.legal_name,
+			display_name: client.display_name,
+			tax_id: client.tax_id ?? '',
+			notes: client.notes ?? ''
+		};
+		editError = null;
+		editOpen = true;
+	}
+
+	async function saveEdit() {
+		if (!editFor) return;
+		savingEdit = true;
+		editError = null;
+		try {
+			const updated = await api.patch<Client>(`/clients/${editFor.id}`, editForm);
+			clients = clients.map((item) => (item.id === updated.id ? updated : item));
+			editOpen = false;
+			editFor = null;
+		} catch (err) {
+			editError = err instanceof ApiError ? err.message : 'Error al guardar los cambios';
+		} finally {
+			savingEdit = false;
+		}
+	}
+
 	onMount(load);
 </script>
 
@@ -80,6 +115,7 @@
 			columns={[
 				{ key: 'display_name', label: 'Nombre' },
 				{ key: 'legal_name', label: 'Razón social' },
+				{ key: 'tax_id', label: 'Índice / RFC' },
 				{ key: 'status', label: 'Estado' }
 			]}
 			rows={clients}
@@ -88,6 +124,7 @@
 		>
 			{#snippet actions(row)}
 				<div class="flex justify-end gap-1">
+					<Button variant="ghost" onclick={() => openEdit(row as Client)}>Editar</Button>
 					<Button variant="ghost" onclick={() => changeStatus(row as Client, 'suspend')}>
 						Suspender
 					</Button>
@@ -111,8 +148,12 @@
 			<input class={inputClass} bind:value={form.legal_name} />
 		</label>
 		<label class="flex flex-col gap-1">
-			<span>NIF/CIF (opcional)</span>
-			<input class={inputClass} bind:value={form.tax_id} />
+			<span>Índice de cliente (RFC)</span>
+			<input class={inputClass} placeholder="Ej. ABC010101XYZ" bind:value={form.tax_id} />
+		</label>
+		<label class="flex flex-col gap-1">
+			<span>Notas (opcional)</span>
+			<input class={inputClass} bind:value={form.notes} />
 		</label>
 		{#if formError}
 			<p class="text-[13px] text-danger" role="alert">{formError}</p>
@@ -122,6 +163,36 @@
 		<Button variant="secondary" onclick={() => (showCreate = false)}>Cancelar</Button>
 		<Button variant="primary" disabled={saving} onclick={create}>
 			{saving ? 'Guardando…' : 'Crear'}
+		</Button>
+	{/snippet}
+</Modal>
+
+<Modal bind:open={editOpen} title="Editar cliente">
+	<div class="flex flex-col gap-3 text-[14px]">
+		<label class="flex flex-col gap-1">
+			<span>Nombre comercial</span>
+			<input class={inputClass} bind:value={editForm.display_name} />
+		</label>
+		<label class="flex flex-col gap-1">
+			<span>Razón social</span>
+			<input class={inputClass} bind:value={editForm.legal_name} />
+		</label>
+		<label class="flex flex-col gap-1">
+			<span>Índice de cliente (RFC)</span>
+			<input class={inputClass} placeholder="Ej. ABC010101XYZ" bind:value={editForm.tax_id} />
+		</label>
+		<label class="flex flex-col gap-1">
+			<span>Notas (opcional)</span>
+			<input class={inputClass} bind:value={editForm.notes} />
+		</label>
+		{#if editError}
+			<p class="text-[13px] text-danger" role="alert">{editError}</p>
+		{/if}
+	</div>
+	{#snippet footer()}
+		<Button variant="secondary" onclick={() => (editOpen = false)}>Cancelar</Button>
+		<Button variant="primary" disabled={savingEdit} onclick={saveEdit}>
+			{savingEdit ? 'Guardando…' : 'Guardar cambios'}
 		</Button>
 	{/snippet}
 </Modal>

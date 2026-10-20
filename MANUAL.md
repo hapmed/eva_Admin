@@ -39,8 +39,9 @@ Guía sencilla de uso. Para detalles técnicos, ver [`docs/EVAS_ADMIN/`](docs/EV
 
 ### 3.1 Crear un cliente
 1. **Clientes → “Nuevo cliente”**.
-2. Rellena *Nombre comercial* y *Razón social* → **Crear**.
-3. Para suspender o archivar: botones **Suspender** / **Archivar** en la fila.
+2. Rellena *Nombre comercial*, *Razón social* e **Índice de cliente (RFC)** → **Crear**.
+3. Para modificar datos: **Editar** en la fila y **Guardar cambios**.
+4. Para suspender o archivar: botones **Suspender** / **Archivar** en la fila.
 
 ### 3.2 Registrar una EVA y su versión
 1. **Catálogo EVA → “Nueva EVA”**: `Código` (ej. `cotizaciones`), `Nombre` → **Crear**.

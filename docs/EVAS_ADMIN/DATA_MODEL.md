@@ -94,7 +94,7 @@ Ejemplos: `clients:write`, `installations:upgrade`, `backups:request`, `users:ma
 ### 3.2 Clientes y catálogo
 
 **CLIENT**
-`id`, `legal_name`, `display_name`, `tax_id` [POR VERIFICAR si aplica],
+`id`, `legal_name`, `display_name`, `tax_id` (índice de cliente / RFC),
 `status` (`active`/`suspended`/`archived`), `notes`, `archived_at`,
 `created_at`, `updated_at`.
 

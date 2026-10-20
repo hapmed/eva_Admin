@@ -10,9 +10,14 @@ def test_client_crud(auth_client):
     client = _create_client(auth_client, "Alfa")
     assert client["status"] == "active"
 
-    updated = auth_client.patch(f"/api/v1/clients/{client['id']}", json={"display_name": "Alfa S.L."})
+    updated = auth_client.patch(
+        f"/api/v1/clients/{client['id']}",
+        json={"display_name": "Alfa S.L.", "tax_id": "ABC010101XYZ", "notes": "Cliente piloto"},
+    )
     assert updated.status_code == 200
     assert updated.json()["display_name"] == "Alfa S.L."
+    assert updated.json()["tax_id"] == "ABC010101XYZ"
+    assert updated.json()["notes"] == "Cliente piloto"
 
     listing = auth_client.get("/api/v1/clients")
     assert any(item["id"] == client["id"] for item in listing.json())

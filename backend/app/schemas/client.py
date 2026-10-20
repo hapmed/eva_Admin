@@ -13,8 +13,8 @@ class ClientCreate(BaseModel):
 
 
 class ClientUpdate(BaseModel):
-    legal_name: str | None = Field(default=None, max_length=200)
-    display_name: str | None = Field(default=None, max_length=200)
+    legal_name: str | None = Field(default=None, min_length=1, max_length=200)
+    display_name: str | None = Field(default=None, min_length=1, max_length=200)
     tax_id: str | None = Field(default=None, max_length=60)
     notes: str | None = Field(default=None, max_length=500)
 
