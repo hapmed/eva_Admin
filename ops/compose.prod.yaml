@@ -17,7 +17,12 @@ services:
     build:
       context: ../backend
     env_file: [../.env]
-    networks: [evas_admin_net, apps-net]
+    # Alias único: "api" colisiona con otros proyectos en apps-net.
+    networks:
+      evas_admin_net:
+        aliases:
+          - evas-api
+      apps-net: {}
     restart: unless-stopped
     logging:
       driver: json-file
@@ -44,8 +49,11 @@ services:
     environment:
       PORT: "3000"
       HOST: "0.0.0.0"
-      API_INTERNAL_URL: "http://api:8000"
-    networks: [evas_admin_net]
+      API_INTERNAL_URL: "http://evas-api:8000"
+    networks:
+      evas_admin_net:
+        aliases:
+          - evas-web
     depends_on: [api]
     restart: unless-stopped
     logging:
