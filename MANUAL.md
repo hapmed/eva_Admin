@@ -25,7 +25,7 @@ Guía sencilla de uso. Para detalles técnicos, ver [`docs/EVAS_ADMIN/`](docs/EV
 | **Clientes** | Empresas (cada empresa es un cliente). |
 | **Usuarios internos** | Cuentas del equipo HAPMED y sus roles. |
 | **Catálogo EVA** | Las aplicaciones EVA y sus versiones. |
-| **Suscripciones** | Planes y contratos (mensual/trimestral/anual) y vencimientos. |
+| **Suscripciones** | Planes y contratos (mensual/anual), tiempo transcurrido y vencimientos. |
 | **Instalaciones** | Cada EVA montada para un cliente (versión, dominio, estado). |
 | **Dominios** | Dominios/subdominios asignados. |
 | **Bases de datos** | Metadatos (nombre, nodo, última copia). Nunca muestra contraseñas. |
@@ -49,7 +49,7 @@ Guía sencilla de uso. Para detalles técnicos, ver [`docs/EVAS_ADMIN/`](docs/EV
 
 ### 3.3 Crear un plan
 1. **Suscripciones → “Nuevo plan”**.
-2. `Código` (ej. `mensual`), `Nombre`, `Periodo` (mensual/trimestral/anual), `Precio` → **Crear**.
+2. `Código` (ej. `mensual`), `Nombre`, `Periodo` (mensual/anual), `Precio` → **Crear**.
 
 ### 3.4 Contratar (suscripción)
 1. **Suscripciones → “Nueva suscripción”**.

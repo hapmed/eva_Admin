@@ -53,7 +53,7 @@ operaciones se le han aplicado.
 
 ### 3.5 Suscripciones, planes y vencimientos
 
-- Planes mensuales, trimestrales y anuales.
+- Planes mensuales y anuales.
 - Fechas de inicio, renovación y vencimiento; historial de cambios.
 - Estados de dominio con transiciones válidas.
 - Alertas configurables previas al vencimiento y para vencidas.

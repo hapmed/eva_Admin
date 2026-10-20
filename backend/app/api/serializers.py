@@ -1,9 +1,14 @@
 """Serializadores ORM → dict (coinciden con los esquemas de respuesta)."""
 
+from typing import TYPE_CHECKING
+
 from app.models.client import Client, ClientUser
 from app.models.eva import EvaProduct, EvaVersion
 from app.models.subscription import Plan, Subscription, SubscriptionEvent
 from app.models.user import HapmedUser, Permission, Role
+
+if TYPE_CHECKING:
+    from app.services.subscription_service import SubscriptionTiming
 
 
 def user_out(user: HapmedUser) -> dict:
@@ -96,7 +101,7 @@ def plan_out(plan: Plan) -> dict:
     }
 
 
-def subscription_out(subscription: Subscription, days_to_expiry: int, expiring_soon: bool) -> dict:
+def subscription_out(subscription: Subscription, timing: "SubscriptionTiming", expiring_soon: bool) -> dict:
     return {
         "id": str(subscription.id),
         "client_id": str(subscription.client_id),
@@ -107,7 +112,12 @@ def subscription_out(subscription: Subscription, days_to_expiry: int, expiring_s
         "renewal_date": subscription.renewal_date,
         "end_date": subscription.end_date,
         "auto_renew": subscription.auto_renew,
-        "days_to_expiry": days_to_expiry,
+        "days_to_expiry": timing.days_remaining,
+        "days_total": timing.days_total,
+        "days_elapsed": timing.days_elapsed,
+        "days_overdue": timing.days_overdue,
+        "progress_percent": timing.progress_percent,
+        "is_expired": timing.is_expired,
         "expiring_soon": expiring_soon,
     }
 

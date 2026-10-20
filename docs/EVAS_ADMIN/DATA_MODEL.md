@@ -113,7 +113,7 @@ UNIQUE(`eva_product_id`, `version`).
 ### 3.3 Planes y suscripciones
 
 **PLAN**
-`id`, `code` (UNIQUE), `name`, `billing_period` (`monthly`/`quarterly`/`yearly`),
+`id`, `code` (UNIQUE), `name`, `billing_period` (`monthly`/`yearly`),
 `price` numeric [PROPUESTA], `currency` [POR VERIFICAR], `is_active`.
 
 **SUBSCRIPTION**

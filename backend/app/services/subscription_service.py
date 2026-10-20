@@ -5,6 +5,8 @@ No se suspenden ni borran instalaciones automáticamente (ver docs).
 """
 
 import calendar
+import math
+from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from sqlalchemy import select
@@ -17,6 +19,8 @@ from app.schemas.subscription import PlanCreate, SubscriptionCreate
 from app.services import audit
 from app.services.util import as_uuid
 
+# Los planes nuevos solo admiten monthly/yearly (ver PlanCreate).
+# "quarterly" se conserva para poder renovar planes históricos ya existentes.
 PERIOD_MONTHS: dict[str, int] = {"monthly": 1, "quarterly": 3, "yearly": 12}
 EXPIRING_DAYS = 14
 CANCELLED = "cancelled"
@@ -188,9 +192,43 @@ def cancel(db: Session, context: AuthContext, subscription_id: str, notes: str =
     return subscription
 
 
+@dataclass(frozen=True)
+class SubscriptionTiming:
+    """Tiempo de la suscripción: total, transcurrido, restante y vencido."""
+
+    days_total: int
+    days_elapsed: int
+    days_remaining: int
+    days_overdue: int
+    progress_percent: float
+    is_expired: bool
+
+
+def subscription_timing(subscription: Subscription) -> SubscriptionTiming:
+    now = datetime.now(UTC)
+    start = _aware(subscription.start_date)
+    end = _aware(subscription.end_date)
+    total_seconds = max((end - start).total_seconds(), 1.0)
+    elapsed_seconds = (now - start).total_seconds()
+
+    days_total = max(1, math.ceil(total_seconds / 86400))
+    days_elapsed = min(days_total, max(0, int(elapsed_seconds // 86400)))
+    days_remaining = max(0, math.ceil((end - now).total_seconds() / 86400))
+    days_overdue = max(0, int((now - end).total_seconds() // 86400))
+    progress_percent = round(min(max(elapsed_seconds / total_seconds * 100, 0.0), 100.0), 1)
+
+    return SubscriptionTiming(
+        days_total=days_total,
+        days_elapsed=days_elapsed,
+        days_remaining=days_remaining,
+        days_overdue=days_overdue,
+        progress_percent=progress_percent,
+        is_expired=now >= end,
+    )
+
+
 def days_to_expiry(subscription: Subscription) -> int:
-    delta = _aware(subscription.end_date) - datetime.now(UTC)
-    return max(0, delta.days)
+    return subscription_timing(subscription).days_remaining
 
 
 def is_expiring_soon(subscription: Subscription) -> bool:

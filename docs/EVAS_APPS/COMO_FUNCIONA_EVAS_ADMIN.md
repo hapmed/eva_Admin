@@ -19,7 +19,7 @@ Piensa en HAPMED como un **edificio de oficinas** y en cada **EVA** como un
 ## Qué hace EVAS Admin
 
 1. **Registra** clientes, usuarios de HAPMED y catálogo de EVAs.
-2. **Contrata** (suscripciones: mensual/trimestral/anual, con vencimientos).
+2. **Contrata** (suscripciones mensuales o anuales, con vencimientos y tiempo restante).
 3. **Monta** instalaciones: cliente + EVA + versión + dominio + base de datos.
 4. **Vigila** (monitoreo: estado, salud, logs saneados) y **avisa** (alertas).
 5. **Actualiza** a versiones aprobadas, con respaldo previo y healthchecks.

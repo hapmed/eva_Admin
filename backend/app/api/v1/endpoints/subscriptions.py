@@ -21,7 +21,7 @@ router = APIRouter()
 def _out(subscription) -> dict:
     return subscription_out(
         subscription,
-        subscription_service.days_to_expiry(subscription),
+        subscription_service.subscription_timing(subscription),
         subscription_service.is_expiring_soon(subscription),
     )
 

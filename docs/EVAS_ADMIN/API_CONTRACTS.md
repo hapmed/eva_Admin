@@ -127,6 +127,19 @@ Códigos HTTP: `400` validación, `401` no autenticado, `403` sin permiso,
 | POST | `/subscriptions/{id}/cancel` | `subscriptions:write` |
 | GET | `/subscriptions/{id}/events` | `subscriptions:read` |
 
+Los planes nuevos solo admiten `monthly` o `yearly`. Las respuestas de
+suscripción incluyen el cálculo de tiempo (fechas en UTC):
+
+| Campo | Descripción |
+|-------|-------------|
+| `days_total` | Días del periodo contratado (inicio → vencimiento). |
+| `days_elapsed` | Días transcurridos desde el inicio. |
+| `days_to_expiry` | Días restantes (0 si ya venció). |
+| `days_overdue` | Días transcurridos desde el vencimiento. |
+| `progress_percent` | Porcentaje transcurrido (0–100). |
+| `is_expired` | `true` si la fecha de vencimiento ya pasó. |
+| `expiring_soon` | `true` si vence en ≤ 14 días y está activa o en gracia. |
+
 ## 9. Instalaciones
 
 | Método | Ruta | Permiso |

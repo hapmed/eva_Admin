@@ -20,7 +20,7 @@ Lee `docs/EVAS_ADMIN/` y respeta el modelo de datos aprobado. Implementa estos m
 - No aceptar imágenes Docker ni parámetros arbitrarios desde el usuario.
 
 ## Suscripciones
-- Planes mensuales, trimestrales y anuales.
+- Planes mensuales y anuales.
 - Fechas de inicio, renovación y vencimiento.
 - Estados definidos en el dominio y transiciones válidas.
 - Historial de renovaciones y cambios.
