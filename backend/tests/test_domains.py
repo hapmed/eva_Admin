@@ -23,3 +23,26 @@ def test_domain_endpoints_and_conflict(auth_client):
     deleted = auth_client.delete(f"/api/v1/domains/{created.json()['id']}")
     assert deleted.status_code == 204
     assert auth_client.get("/api/v1/domains/check?fqdn=app.dom.test").json()["available"] is True
+
+
+def test_domain_can_be_changed(auth_client):
+    client = make_client(auth_client, "DomEdit")
+    eva = make_eva(auth_client, code="domedit")
+    installation = make_installation(auth_client, client["id"], eva["id"]).json()
+    domain = auth_client.post(
+        "/api/v1/domains",
+        json={"installation_id": installation["id"], "fqdn": "old.dom.test"},
+    ).json()
+
+    updated = auth_client.patch(f"/api/v1/domains/{domain['id']}", json={"fqdn": "New.Dom.Test"})
+    assert updated.status_code == 200, updated.text
+    assert updated.json()["fqdn"] == "new.dom.test"
+    assert auth_client.get("/api/v1/domains/check?fqdn=old.dom.test").json()["available"] is True
+    assert auth_client.get("/api/v1/domains/check?fqdn=new.dom.test").json()["available"] is False
+
+    other = auth_client.post(
+        "/api/v1/domains",
+        json={"installation_id": installation["id"], "fqdn": "other.dom.test"},
+    ).json()
+    conflict = auth_client.patch(f"/api/v1/domains/{other['id']}", json={"fqdn": "new.dom.test"})
+    assert conflict.status_code == 409

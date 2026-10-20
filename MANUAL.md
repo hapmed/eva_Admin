@@ -59,6 +59,8 @@ Guía sencilla de uso. Para detalles técnicos, ver [`docs/EVAS_ADMIN/`](docs/EV
 
 ### 3.5 Montar una instalación (aprovisiona de verdad)
 1. **Instalaciones → “Nueva instalación”**: Cliente, EVA, Versión y **Dominio principal** → **Crear**.
+   Al elegir el cliente se propone un subdominio corto derivado de su RFC; puedes cambiarlo.
+   Para cambiarlo después: **Dominios → Editar**.
 2. Al crearla, la plataforma **crea automáticamente**:
    - una **base de datos** PostgreSQL propia del cliente;
    - el **contenedor** Docker de la EVA (publicado en `127.0.0.1`, accesible por el túnel);

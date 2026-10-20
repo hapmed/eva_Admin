@@ -20,6 +20,8 @@ class Client(IdMixin, TimestampMixin, Base):
     legal_name: Mapped[str] = mapped_column(String(200))
     display_name: Mapped[str] = mapped_column(String(200))
     tax_id: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    # Índice corto único para el subdominio inicial (derivado del RFC).
+    slug: Mapped[str | None] = mapped_column(String(30), unique=True, index=True, nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="active", nullable=False)
     notes: Mapped[str] = mapped_column(String(500), default="")
     archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

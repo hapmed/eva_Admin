@@ -185,8 +185,13 @@ los fallos de DNS o base de datos se devuelven en `warnings`.
 |--------|------|---------|
 | GET | `/domains` | `domains:read` |
 | POST | `/domains` | `domains:write` |
+| PATCH | `/domains/{id}` | `domains:write` |
 | DELETE | `/domains/{id}` | `domains:write` |
 | GET | `/domains/check?fqdn=` | `domains:read` |
+
+> `PATCH /domains/{id}` cambia el FQDN, valida que sea único y actualiza el
+> DNS/ingress de Cloudflare. El subdominio inicial de un cliente se sugiere a
+> partir de su RFC (índice corto único).
 
 ## 11. Bases de datos (metadatos)
 

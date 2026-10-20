@@ -1,5 +1,6 @@
 """Lógica de clientes y usuarios de cliente (aislamiento por cliente)."""
 
+import re
 from datetime import UTC, datetime
 
 from sqlalchemy import select
@@ -11,6 +12,61 @@ from app.models.client import Client, ClientUser
 from app.schemas.client import ClientCreate, ClientUpdate, ClientUserCreate, ClientUserUpdate
 from app.services import audit
 from app.services.util import as_uuid
+
+RESERVED_SLUGS = {
+    "admin",
+    "admon",
+    "api",
+    "app",
+    "cdn",
+    "dev",
+    "docker",
+    "evas",
+    "ftp",
+    "hapmed",
+    "happytrading",
+    "homelabdash",
+    "mail",
+    "opencode",
+    "smtp",
+    "staging",
+    "static",
+    "test",
+    "www",
+}
+
+
+def _normalize_slug(value: str) -> str:
+    slug = re.sub(r"[^a-z0-9-]", "", value.strip().lower()).strip("-")
+    if not slug:
+        raise ValueError("el índice corto no es válido")
+    return slug
+
+
+def _base_slug(value: str) -> str:
+    cleaned = re.sub(r"[^a-z0-9]", "", (value or "").lower())
+    prefix = re.match(r"[a-z]+", cleaned)
+    return (prefix.group(0) if prefix else cleaned)[:4] or "cli"
+
+
+def _slug_available(db: Session, slug: str, exclude_id=None) -> bool:
+    if slug in RESERVED_SLUGS:
+        return False
+    stmt = select(Client.id).where(Client.slug == slug)
+    if exclude_id is not None:
+        stmt = stmt.where(Client.id != exclude_id)
+    return db.scalar(stmt) is None
+
+
+def _unique_slug(db: Session, base: str, exclude_id=None) -> str:
+    candidate = _normalize_slug(base)[:26]
+    if _slug_available(db, candidate, exclude_id):
+        return candidate
+    for suffix in range(2, 100):
+        candidate = f"{_normalize_slug(base)[:26]}{suffix}"
+        if _slug_available(db, candidate, exclude_id):
+            return candidate
+    raise ValueError("no se pudo generar un índice corto único")
 
 
 def list_clients(db: Session, status: str | None = None, q: str | None = None) -> list[Client]:
@@ -30,10 +86,18 @@ def get_client(db: Session, client_id: str) -> Client:
 
 
 def create_client(db: Session, context: AuthContext, data: ClientCreate) -> Client:
+    if data.slug:
+        slug = _normalize_slug(data.slug)
+        if not _slug_available(db, slug):
+            raise ValueError("el índice corto ya está en uso")
+    else:
+        slug = _unique_slug(db, _base_slug(data.tax_id or data.display_name))
+
     client = Client(
         legal_name=data.legal_name,
         display_name=data.display_name,
         tax_id=data.tax_id,
+        slug=slug,
         notes=data.notes,
         status="active",
     )
@@ -51,6 +115,15 @@ def update_client(db: Session, context: AuthContext, client_id: str, data: Clien
         value = getattr(data, field)
         if value is not None:
             setattr(client, field, value)
+
+    if data.slug is not None:
+        slug = _normalize_slug(data.slug)
+        if not _slug_available(db, slug, client.id):
+            raise ValueError("el índice corto ya está en uso")
+        client.slug = slug
+    elif client.slug is None:
+        client.slug = _unique_slug(db, _base_slug(client.tax_id or client.display_name))
+
     audit.record(db, context, "client.update", "client", client.id)
     db.commit()
     db.refresh(client)

@@ -7,7 +7,7 @@ from app.api.deps import AuthContext, require_permission
 from app.api.errors import http_error
 from app.api.serializers import domain_out
 from app.db.session import get_db
-from app.schemas.installation import DomainCheck, DomainCreate, DomainOut
+from app.schemas.installation import DomainCheck, DomainCreate, DomainOut, DomainUpdate
 from app.services import domain_service
 
 router = APIRouter()
@@ -40,6 +40,20 @@ def create_domain(
 ) -> dict:
     try:
         domain = domain_service.create_domain(db, context, data.installation_id, data.fqdn, data.kind)
+    except (ValueError, LookupError) as exc:
+        raise http_error(exc) from exc
+    return domain_out(domain)
+
+
+@router.patch("/{domain_id}", response_model=DomainOut)
+def update_domain(
+    domain_id: str,
+    data: DomainUpdate,
+    context: AuthContext = Depends(require_permission("domains:write")),
+    db: Session = Depends(get_db),
+) -> dict:
+    try:
+        domain = domain_service.update_domain(db, context, domain_id, data.fqdn)
     except (ValueError, LookupError) as exc:
         raise http_error(exc) from exc
     return domain_out(domain)

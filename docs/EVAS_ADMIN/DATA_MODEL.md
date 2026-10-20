@@ -95,6 +95,7 @@ Ejemplos: `clients:write`, `installations:upgrade`, `backups:request`, `users:ma
 
 **CLIENT**
 `id`, `legal_name`, `display_name`, `tax_id` (índice de cliente / RFC),
+`slug` (índice corto único para el subdominio, derivado del RFC),
 `status` (`active`/`suspended`/`archived`), `notes`, `archived_at`,
 `created_at`, `updated_at`.
 

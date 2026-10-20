@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING
 
+from app.core.config import get_settings
 from app.models.client import Client, ClientUser
 from app.models.eva import EvaProduct, EvaVersion
 from app.models.subscription import Plan, Subscription, SubscriptionEvent
@@ -38,11 +39,15 @@ def role_out(role: Role) -> dict:
 
 
 def client_out(client: Client) -> dict:
+    settings = get_settings()
+    suggested_domain = f"{client.slug}.{settings.public_domain_suffix}" if client.slug else None
     return {
         "id": str(client.id),
         "legal_name": client.legal_name,
         "display_name": client.display_name,
         "tax_id": client.tax_id,
+        "slug": client.slug,
+        "suggested_domain": suggested_domain,
         "status": client.status,
         "notes": client.notes,
         "created_at": client.created_at,

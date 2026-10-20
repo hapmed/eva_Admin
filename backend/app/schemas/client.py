@@ -9,6 +9,7 @@ class ClientCreate(BaseModel):
     legal_name: str = Field(min_length=1, max_length=200)
     display_name: str = Field(min_length=1, max_length=200)
     tax_id: str | None = Field(default=None, max_length=60)
+    slug: str | None = Field(default=None, max_length=30)
     notes: str = Field(default="", max_length=500)
 
 
@@ -16,6 +17,7 @@ class ClientUpdate(BaseModel):
     legal_name: str | None = Field(default=None, min_length=1, max_length=200)
     display_name: str | None = Field(default=None, min_length=1, max_length=200)
     tax_id: str | None = Field(default=None, max_length=60)
+    slug: str | None = Field(default=None, max_length=30)
     notes: str | None = Field(default=None, max_length=500)
 
 
@@ -24,6 +26,8 @@ class ClientOut(BaseModel):
     legal_name: str
     display_name: str
     tax_id: str | None
+    slug: str | None
+    suggested_domain: str | None
     status: str
     notes: str
     created_at: datetime

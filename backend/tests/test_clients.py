@@ -23,6 +23,26 @@ def test_client_crud(auth_client):
     assert any(item["id"] == client["id"] for item in listing.json())
 
 
+def test_client_slug_is_derived_from_rfc_and_unique(auth_client):
+    first = auth_client.post(
+        "/api/v1/clients",
+        json={"legal_name": "Alfa SA", "display_name": "Alfa", "tax_id": "ABC010101XYZ"},
+    )
+    second = auth_client.post(
+        "/api/v1/clients",
+        json={"legal_name": "Beta SA", "display_name": "Beta", "tax_id": "ABC010101XYZ"},
+    )
+    assert first.status_code == 201 and second.status_code == 201
+    assert first.json()["slug"] == "abc"
+    assert second.json()["slug"] == "abc2"
+    assert first.json()["suggested_domain"] == "abc.hapmed.qzz.io"
+    assert second.json()["suggested_domain"] == "abc2.hapmed.qzz.io"
+
+    updated = auth_client.patch(f"/api/v1/clients/{second.json()['id']}", json={"slug": "beta"})
+    assert updated.status_code == 200
+    assert updated.json()["slug"] == "beta"
+
+
 def test_suspend_and_archive(auth_client):
     client = _create_client(auth_client, "Beta")
     assert auth_client.post(f"/api/v1/clients/{client['id']}/suspend").json()["status"] == "suspended"

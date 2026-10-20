@@ -12,7 +12,7 @@
 		name: string;
 		versions: { version: string; status: string }[];
 	};
-	type Client = { id: string; display_name: string };
+	type Client = { id: string; display_name: string; suggested_domain: string | null };
 	type Installation = {
 		id: string;
 		client_id: string;
@@ -126,6 +126,11 @@
 		}
 	}
 
+	function applySuggestedDomain() {
+		const client = clients.find((item) => item.id === form.client_id);
+		form.primary_domain = client?.suggested_domain ?? '';
+	}
+
 	function openDelete(installation: Installation) {
 		deleteFor = installation;
 		deleteConfirm = '';
@@ -216,7 +221,7 @@
 	<div class="flex flex-col gap-3 text-[14px]">
 		<label class="flex flex-col gap-1">
 			<span>Cliente</span>
-			<select class={inputClass} bind:value={form.client_id}>
+			<select class={inputClass} bind:value={form.client_id} onchange={applySuggestedDomain}>
 				<option value="">Selecciona…</option>
 				{#each clients as client (client.id)}<option value={client.id}>{client.display_name}</option
 					>{/each}
@@ -245,6 +250,9 @@
 				bind:value={form.primary_domain}
 				placeholder="cliente.ejemplo.test"
 			/>
+			<span class="text-[12px] text-ink-3">
+				Se propone un subdominio corto a partir del RFC del cliente. Puedes cambiarlo.
+			</span>
 		</label>
 		{#if formError}<p class="text-[13px] text-danger" role="alert">{formError}</p>{/if}
 	</div>

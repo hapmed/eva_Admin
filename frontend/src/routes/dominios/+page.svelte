@@ -6,7 +6,7 @@
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import { ApiError, api } from '../../lib/api/client';
 
-	type Client = { id: string; display_name: string };
+	type Client = { id: string; display_name: string; suggested_domain: string | null };
 	type Eva = { id: string; name: string };
 	type Installation = { id: string; client_id: string; eva_product_id: string };
 	type Domain = { id: string; installation_id: string; fqdn: string; kind: string; status: string };
@@ -23,6 +23,12 @@
 	let formError = $state<string | null>(null);
 	let availability = $state<boolean | null>(null);
 	let form = $state({ installation_id: '', fqdn: '', kind: 'alias' });
+
+	let editOpen = $state(false);
+	let editFor = $state<Domain | null>(null);
+	let editFqdn = $state('');
+	let editError = $state<string | null>(null);
+	let savingEdit = $state(false);
 
 	const inputClass = 'min-h-11 rounded-[12px] border border-line bg-bg px-3';
 
@@ -96,6 +102,36 @@
 		}
 	}
 
+	function applySuggestion() {
+		const installation = installations.find((item) => item.id === form.installation_id);
+		if (!installation) return;
+		const client = clients.find((item) => item.id === installation.client_id);
+		form.fqdn = client?.suggested_domain ?? '';
+	}
+
+	function openEdit(domain: Domain) {
+		editFor = domain;
+		editFqdn = domain.fqdn;
+		editError = null;
+		editOpen = true;
+	}
+
+	async function saveEdit() {
+		if (!editFor) return;
+		savingEdit = true;
+		editError = null;
+		try {
+			const updated = await api.patch<Domain>(`/domains/${editFor.id}`, { fqdn: editFqdn });
+			domains = domains.map((item) => (item.id === updated.id ? updated : item));
+			editOpen = false;
+			editFor = null;
+		} catch (err) {
+			editError = err instanceof ApiError ? err.message : 'Error al cambiar el dominio';
+		} finally {
+			savingEdit = false;
+		}
+	}
+
 	onMount(load);
 </script>
 
@@ -123,7 +159,8 @@
 			emptyDescription="Registra el primer dominio con el botón «Nuevo dominio»."
 		>
 			{#snippet actions(row)}
-				<div class="flex justify-end">
+				<div class="flex justify-end gap-1">
+					<Button variant="ghost" onclick={() => openEdit(row as Domain)}>Editar</Button>
 					<Button variant="ghost" onclick={() => remove(row as Domain)}>Eliminar</Button>
 				</div>
 			{/snippet}
@@ -135,7 +172,7 @@
 	<div class="flex flex-col gap-3 text-[14px]">
 		<label class="flex flex-col gap-1">
 			<span>Instalación</span>
-			<select class={inputClass} bind:value={form.installation_id}>
+			<select class={inputClass} bind:value={form.installation_id} onchange={applySuggestion}>
 				<option value="">Selecciona…</option>
 				{#each installations as installation (installation.id)}
 					<option value={installation.id}>{installationLabel(installation.id)}</option>
@@ -172,5 +209,30 @@
 		<Button variant="primary" disabled={saving} onclick={create}
 			>{saving ? 'Guardando…' : 'Crear'}</Button
 		>
+	{/snippet}
+</Modal>
+
+<Modal bind:open={editOpen} title="Cambiar dominio">
+	<div class="flex flex-col gap-3 text-[14px]">
+		<div class="rounded-[12px] bg-surface-2 px-3 py-2 text-[13px]">
+			<p class="font-medium">{editFor?.fqdn ?? '—'}</p>
+			<p class="text-ink-2">
+				{editFor ? installationLabel(editFor.installation_id) : '—'}
+			</p>
+		</div>
+		<label class="flex flex-col gap-1">
+			<span>Nuevo dominio (FQDN)</span>
+			<input class={inputClass} bind:value={editFqdn} placeholder="cliente.hapmed.qzz.io" />
+			<span class="text-[12px] text-ink-3">
+				Debe ser único. Se actualizará el DNS y la ruta del túnel.
+			</span>
+		</label>
+		{#if editError}<p class="text-[13px] text-danger" role="alert">{editError}</p>{/if}
+	</div>
+	{#snippet footer()}
+		<Button variant="secondary" onclick={() => (editOpen = false)}>Cancelar</Button>
+		<Button variant="primary" disabled={savingEdit} onclick={saveEdit}>
+			{savingEdit ? 'Guardando…' : 'Guardar cambios'}
+		</Button>
 	{/snippet}
 </Modal>

@@ -107,6 +107,10 @@ class DomainCreate(BaseModel):
     kind: str = Field(default="primary", pattern="^(primary|alias)$")
 
 
+class DomainUpdate(BaseModel):
+    fqdn: str = Field(min_length=3, max_length=253)
+
+
 class DomainOut(BaseModel):
     id: str
     installation_id: str
