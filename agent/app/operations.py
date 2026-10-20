@@ -26,6 +26,7 @@ _DEPLOY_PARAMS = {
 class OperationType(StrEnum):
     deploy_installation = "deploy_installation"
     upgrade_installation = "upgrade_installation"
+    remove_installation = "remove_installation"
     restart_service = "restart_service"
     health_check = "health_check"
     get_logs = "get_logs"
@@ -51,6 +52,7 @@ class OperationResult(BaseModel):
 ALLOWED_PARAMS: dict[OperationType, set[str]] = {
     OperationType.deploy_installation: _DEPLOY_PARAMS,
     OperationType.upgrade_installation: _DEPLOY_PARAMS,
+    OperationType.remove_installation: set(),
     OperationType.restart_service: {"service_name"},
     OperationType.health_check: set(),
     OperationType.get_logs: {"limit"},
@@ -62,6 +64,7 @@ ALLOWED_PARAMS: dict[OperationType, set[str]] = {
 REQUIRED_PARAMS: dict[OperationType, set[str]] = {
     OperationType.deploy_installation: {"image", "name", "host_port"},
     OperationType.upgrade_installation: {"image", "name", "host_port"},
+    OperationType.remove_installation: set(),
     OperationType.restart_service: {"service_name"},
     OperationType.health_check: set(),
     OperationType.get_logs: set(),
@@ -90,6 +93,8 @@ def _dispatch(driver: OperationsDriver, request: OperationRequest) -> dict[str, 
         return driver.deploy_installation(params)
     if request.type is OperationType.upgrade_installation:
         return driver.upgrade_installation(params)
+    if request.type is OperationType.remove_installation:
+        return driver.remove_installation(request.installation_id)
     if request.type is OperationType.restart_service:
         return driver.restart_service(request.installation_id, params["service_name"])
     if request.type is OperationType.health_check:

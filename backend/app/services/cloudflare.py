@@ -91,3 +91,44 @@ def upsert_hostname(subdomain: str, host_port: int) -> dict[str, Any]:
         )
 
     return {"hostname": hostname, "host_port": host_port, "target": target}
+
+
+def delete_hostname(subdomain: str) -> dict[str, Any]:
+    """Elimina el DNS y la regla de ingress de un hostname."""
+    if not _configured():
+        raise RuntimeError("Cloudflare no configurado")
+    settings = get_settings()
+    hostname = fqdn(subdomain)
+
+    with httpx.Client(timeout=30) as client:
+        existing = (
+            client.get(
+                f"{_API}/zones/{settings.cloudflare_zone_id}/dns_records",
+                params={"name": hostname},
+                headers=_headers(),
+            )
+            .json()
+            .get("result", [])
+        )
+        for record in existing:
+            client.delete(
+                f"{_API}/zones/{settings.cloudflare_zone_id}/dns_records/{record['id']}",
+                headers=_headers(),
+            )
+
+        config = client.get(
+            f"{_API}/accounts/{settings.cloudflare_account_id}/cfd_tunnel/"
+            f"{settings.cloudflare_tunnel_id}/configurations",
+            headers=_headers(),
+        ).json()["result"]["config"]
+        ingress = [rule for rule in config.get("ingress", []) if rule.get("hostname") != hostname]
+        if not any(not rule.get("hostname") for rule in ingress):
+            ingress.append({"service": "http_status:404"})
+        client.put(
+            f"{_API}/accounts/{settings.cloudflare_account_id}/cfd_tunnel/"
+            f"{settings.cloudflare_tunnel_id}/configurations",
+            json={"config": {"ingress": ingress}},
+            headers=_headers(),
+        )
+
+    return {"hostname": hostname, "deleted": True}

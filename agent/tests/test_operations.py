@@ -66,5 +66,16 @@ def test_execute_simulated_deploy():
     assert result.status == "accepted"
 
 
+def test_execute_simulated_remove():
+    request = OperationRequest(
+        type=OperationType.remove_installation,
+        installation_id="i1",
+        params={},
+    )
+    result = execute(request, "simulated")
+    assert result.simulated is True
+    assert result.data["installation_id"] == "i1"
+
+
 def test_simulated_driver_mode():
     assert SimulatedDriver().mode == "simulated"

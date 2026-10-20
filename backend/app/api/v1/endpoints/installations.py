@@ -11,6 +11,7 @@ from app.db.session import get_db
 from app.schemas.eva_user import EvaUserCreate, EvaUserOut, EvaUserReset
 from app.schemas.installation import (
     InstallationCreate,
+    InstallationDeleteOut,
     InstallationOut,
     InstallationServiceOut,
     InstallationUpdate,
@@ -80,6 +81,18 @@ def update_installation(
     except (ValueError, LookupError) as exc:
         raise http_error(exc) from exc
     return _out(db, installation)
+
+
+@router.delete("/{installation_id}", response_model=InstallationDeleteOut)
+def delete_installation(
+    installation_id: str,
+    context: AuthContext = Depends(require_permission("installations:write")),
+    db: Session = Depends(get_db),
+) -> dict:
+    try:
+        return installation_service.delete_installation(db, context, installation_id)
+    except (ValueError, LookupError) as exc:
+        raise http_error(exc) from exc
 
 
 @router.get("/{installation_id}/services", response_model=list[InstallationServiceOut])

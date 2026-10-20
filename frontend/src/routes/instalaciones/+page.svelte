@@ -41,6 +41,13 @@
 	let usersOpen = $state(false);
 	let upgradeVersion = $state('');
 
+	let deleteFor = $state<Installation | null>(null);
+	let deleteOpen = $state(false);
+	let deleteConfirm = $state('');
+	let deleteError = $state<string | null>(null);
+	let deleting = $state(false);
+	let notice = $state<string | null>(null);
+
 	const inputClass = 'min-h-11 rounded-[12px] border border-line bg-bg px-3';
 
 	const clientName = (id: string) => clients.find((c) => c.id === id)?.display_name ?? id;
@@ -119,6 +126,34 @@
 		}
 	}
 
+	function openDelete(installation: Installation) {
+		deleteFor = installation;
+		deleteConfirm = '';
+		deleteError = null;
+		deleteOpen = true;
+	}
+
+	async function removeInstallation() {
+		if (!deleteFor || deleteConfirm !== 'ELIMINAR') return;
+		const target = deleteFor;
+		deleting = true;
+		deleteError = null;
+		try {
+			const result = await api.delete<{ warnings: string[] }>(`/installations/${target.id}`);
+			installations = installations.filter((item) => item.id !== target.id);
+			deleteOpen = false;
+			deleteFor = null;
+			deleteConfirm = '';
+			notice = result?.warnings?.length
+				? `Instalación eliminada con avisos: ${result.warnings.join('; ')}`
+				: null;
+		} catch (err) {
+			deleteError = err instanceof ApiError ? err.message : 'Error al eliminar la instalación';
+		} finally {
+			deleting = false;
+		}
+	}
+
 	onMount(load);
 </script>
 
@@ -133,6 +168,14 @@
 {:else if error}
 	<p class="mt-6 text-[15px] text-danger" role="alert">{error}</p>
 {:else}
+	{#if notice}
+		<p
+			class="mt-4 rounded-brand border border-line bg-surface-2 px-4 py-3 text-[14px] text-warning"
+			role="status"
+		>
+			{notice}
+		</p>
+	{/if}
 	<div class="mt-6">
 		<DataTable
 			columns={[
@@ -159,6 +202,9 @@
 					</Button>
 					<Button variant="ghost" onclick={() => openUpgrade(row as Installation)}>
 						Actualizar
+					</Button>
+					<Button variant="dangerGhost" onclick={() => openDelete(row as Installation)}>
+						Eliminar
 					</Button>
 				</div>
 			{/snippet}
@@ -231,6 +277,37 @@
 		<Button variant="primary" disabled={saving} onclick={doUpgrade}
 			>{saving ? 'Aplicando…' : 'Actualizar'}</Button
 		>
+	{/snippet}
+</Modal>
+
+<Modal bind:open={deleteOpen} title="Eliminar instalación">
+	<div class="flex flex-col gap-3 text-[14px]">
+		<p>
+			Se eliminarán de forma permanente el contenedor, la base de datos, el dominio y los registros
+			de:
+		</p>
+		<div class="rounded-[12px] bg-surface-2 px-3 py-2 text-[13px]">
+			<p class="font-medium">{deleteFor ? clientName(deleteFor.client_id) : '—'}</p>
+			<p class="text-ink-2">
+				{deleteFor ? evaName(deleteFor.eva_product_id) : '—'} · {deleteFor?.container_name ?? '—'}
+			</p>
+		</div>
+		<p class="text-[13px] text-danger">Esta acción no se puede deshacer.</p>
+		<label class="flex flex-col gap-1">
+			<span>Escribe <strong>ELIMINAR</strong> para confirmar</span>
+			<input class={inputClass} bind:value={deleteConfirm} autocomplete="off" />
+		</label>
+		{#if deleteError}<p class="text-[13px] text-danger" role="alert">{deleteError}</p>{/if}
+	</div>
+	{#snippet footer()}
+		<Button variant="secondary" onclick={() => (deleteOpen = false)}>Cancelar</Button>
+		<Button
+			variant="danger"
+			disabled={deleting || deleteConfirm !== 'ELIMINAR'}
+			onclick={removeInstallation}
+		>
+			{deleting ? 'Eliminando…' : 'Eliminar'}
+		</Button>
 	{/snippet}
 </Modal>
 

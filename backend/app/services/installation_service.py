@@ -2,9 +2,10 @@
 
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
+from app.agents.client import get_agent
 from app.core.auth import AuthContext
 from app.core.config import get_settings
 from app.models.eva import EvaProduct, EvaVersion
@@ -13,11 +14,13 @@ from app.models.infrastructure import (
     Domain,
     Installation,
     InstallationConfig,
+    InstallationSecret,
     InstallationService,
     Node,
+    Operation,
     SecretReference,
 )
-from app.models.monitoring import Backup
+from app.models.monitoring import Backup, HealthCheck, Metric
 from app.schemas.installation import InstallationCreate, InstallationUpdate
 from app.services import (
     audit,
@@ -339,6 +342,75 @@ def restart(
     installation.last_operation_at = datetime.now(UTC)
     db.commit()
     return operation
+
+
+def delete_installation(db: Session, context: AuthContext, installation_id: str) -> dict:
+    """Elimina contenedor, DNS, base de datos y registros de la instalación.
+
+    Si el contenedor no se puede eliminar, se aborta sin borrar los registros.
+    Los fallos de DNS o de base de datos se devuelven como avisos.
+    """
+    installation = get_installation(db, installation_id)
+    settings = get_settings()
+    warnings: list[str] = []
+    domains = list(db.scalars(select(Domain).where(Domain.installation_id == installation.id)).all())
+    database_records = list(
+        db.scalars(select(DatabaseRecord).where(DatabaseRecord.installation_id == installation.id)).all()
+    )
+    container_name = installation.container_name
+
+    try:
+        get_agent().remove_installation(str(installation.id))
+    except Exception as exc:  # noqa: BLE001 - se informa sin detalles internos
+        raise ValueError("no se pudo eliminar el contenedor; no se borraron los registros") from exc
+
+    if settings.provision_enabled:
+        for domain in domains:
+            try:
+                cloudflare.delete_hostname(domain.fqdn)
+            except Exception:  # noqa: BLE001
+                warnings.append(f"no se pudo borrar el dominio {domain.fqdn}")
+        for record in database_records:
+            try:
+                provisioning.deprovision_database(record.logical_name)
+            except Exception:  # noqa: BLE001
+                warnings.append(f"no se pudo borrar la base {record.logical_name}")
+
+    service_ids = [
+        service.id
+        for service in db.scalars(
+            select(InstallationService).where(InstallationService.installation_id == installation.id)
+        ).all()
+    ]
+    database_ids = [record.id for record in database_records]
+
+    if service_ids:
+        db.execute(delete(HealthCheck).where(HealthCheck.installation_service_id.in_(service_ids)))
+        db.execute(delete(Metric).where(Metric.installation_service_id.in_(service_ids)))
+    if database_ids:
+        db.execute(delete(Backup).where(Backup.database_record_id.in_(database_ids)))
+    for model in (
+        Operation,
+        Domain,
+        DatabaseRecord,
+        InstallationService,
+        InstallationConfig,
+        InstallationSecret,
+        SecretReference,
+    ):
+        db.execute(delete(model).where(model.installation_id == installation.id))
+
+    audit.record(
+        db,
+        context,
+        "installation.delete",
+        "installation",
+        installation.id,
+        container=container_name,
+    )
+    db.execute(delete(Installation).where(Installation.id == installation.id))
+    db.commit()
+    return {"id": str(installation.id), "deleted": True, "warnings": warnings}
 
 
 def health_check(db: Session, context: AuthContext, installation_id: str):

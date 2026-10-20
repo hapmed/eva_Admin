@@ -84,6 +84,32 @@ def test_upgrade_and_idempotency(auth_client):
     assert detail["installed_version"] == "1.1.0"
 
 
+def test_delete_installation_removes_resources_and_keeps_client(auth_client):
+    client = make_client(auth_client, "Delete")
+    eva = make_eva(auth_client, code="del")
+    installation = make_installation(
+        auth_client, client["id"], eva["id"], primary_domain="del.ejemplo.test"
+    ).json()
+
+    response = auth_client.delete(f"/api/v1/installations/{installation['id']}")
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["deleted"] is True
+    assert body["warnings"] == []
+    assert auth_client.get(f"/api/v1/installations/{installation['id']}").status_code == 404
+    assert auth_client.get(f"/api/v1/installations?client_id={client['id']}").json() == []
+
+    clients = auth_client.get("/api/v1/clients").json()
+    assert any(item["id"] == client["id"] for item in clients)
+
+
+def test_delete_installation_requires_permission(db_session, client):
+    make_user(db_session, "viewer5@hapmed.test", "viewer-password", ["read_only"])
+    authenticate(client, "viewer5@hapmed.test", "viewer-password")
+    response = client.delete("/api/v1/installations/00000000-0000-0000-0000-000000000000")
+    assert response.status_code == 403
+
+
 def test_installation_isolation_by_client(auth_client):
     client_a = make_client(auth_client, "IsoA")
     client_b = make_client(auth_client, "IsoB")

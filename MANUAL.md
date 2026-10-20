@@ -64,6 +64,8 @@ Guía sencilla de uso. Para detalles técnicos, ver [`docs/EVAS_ADMIN/`](docs/EV
    - el **DNS + ruta del túnel** (`https://<dominio>`) para el dominio indicado.
 3. La instalación queda **activa**; con **Actualizar** subes de versión y en **Monitoreo → Detalle**
    ves logs y métricas.
+4. Para eliminarla: **Instalaciones → Eliminar**, escribe `ELIMINAR` y confirma. Se borran el
+   contenedor, la base de datos, el dominio y los registros; **el cliente se conserva**.
 
 > El **catálogo EVA** debe tener `Imagen Docker`, `Puerto interno` y `Ruta de salud`
 > (se definen al crear la EVA).

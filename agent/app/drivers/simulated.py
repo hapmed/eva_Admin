@@ -12,6 +12,9 @@ class SimulatedDriver:
     def upgrade_installation(self, spec: dict[str, Any]) -> dict[str, Any]:
         return {"simulated": True, "name": spec.get("name"), "image": spec.get("image")}
 
+    def remove_installation(self, installation_id: str) -> dict[str, Any]:
+        return {"simulated": True, "installation_id": installation_id, "removed": []}
+
     def restart_service(self, installation_id: str, service_name: str) -> dict[str, Any]:
         return {"simulated": True, "installation_id": installation_id, "service_name": service_name}
 

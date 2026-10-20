@@ -44,6 +44,38 @@ def database_names(client_ref: str, eva_code: str) -> tuple[str, str]:
     return base, base
 
 
+def deprovision_database(db_name: str) -> None:
+    """Elimina la base y el rol de una instalación (operación destructiva)."""
+    settings = get_settings()
+    if not settings.provision_enabled or not settings.provision_db_admin_user:
+        raise RuntimeError("aprovisionamiento de base de datos deshabilitado")
+
+    prefix = f"{settings.provision_user_prefix}_"
+    if not db_name.startswith(prefix):
+        raise ValueError("la base no está gestionada por EVAS Admin")
+
+    import psycopg
+    from psycopg import sql
+
+    admin_dsn = (
+        f"host={settings.provision_db_host} port={settings.provision_db_port} "
+        f"user={settings.provision_db_admin_user} password={settings.provision_db_admin_password} "
+        f"dbname={settings.provision_db_admin_db}"
+    )
+    with psycopg.connect(admin_dsn, autocommit=True) as connection, connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
+            "WHERE datname = %s AND pid <> pg_backend_pid()",
+            (db_name,),
+        )
+        cursor.execute("SELECT 1 FROM pg_database WHERE datname = %s", (db_name,))
+        if cursor.fetchone():
+            cursor.execute(sql.SQL("DROP DATABASE {}").format(sql.Identifier(db_name)))
+        cursor.execute("SELECT 1 FROM pg_roles WHERE rolname = %s", (db_name,))
+        if cursor.fetchone():
+            cursor.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(db_name)))
+
+
 def provision_database(client_ref: str, eva_code: str) -> tuple[str, str, str]:
     """Crea/actualiza rol+base para el cliente. Devuelve (db_name, db_user, url)."""
     settings = get_settings()

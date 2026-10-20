@@ -148,11 +148,17 @@ suscripción incluyen el cálculo de tiempo (fechas en UTC):
 | POST | `/installations` | `installations:write` |
 | GET | `/installations/{id}` | `installations:read` |
 | PATCH | `/installations/{id}` | `installations:write` |
+| DELETE | `/installations/{id}` | `installations:write` |
 | GET | `/installations/{id}/services` | `installations:read` |
 | GET | `/installations/{id}/health` | `installations:read` |
 | POST | `/installations/{id}/restart` | `installations:operate` |
 | POST | `/installations/{id}/upgrade` | `installations:upgrade` |
 | POST | `/installations/{id}/health-check` | `installations:operate` |
+
+`DELETE /installations/{id}` elimina el contenedor, el DNS/ingress, la base de
+datos y los registros de la instalación. El cliente se conserva. Si el
+contenedor no se puede eliminar, la operación se aborta sin borrar registros;
+los fallos de DNS o base de datos se devuelven en `warnings`.
 
 **Ejemplo — crear instalación (`POST /installations`)**
 

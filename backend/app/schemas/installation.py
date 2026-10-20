@@ -70,6 +70,12 @@ class InstallationOut(BaseModel):
     secrets: list[SecretRefOut]
 
 
+class InstallationDeleteOut(BaseModel):
+    id: str
+    deleted: bool
+    warnings: list[str] = Field(default_factory=list)
+
+
 class OperationRequest(BaseModel):
     idempotency_key: str | None = Field(default=None, max_length=120)
     notes: str = Field(default="", max_length=300)

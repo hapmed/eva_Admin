@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 
-	type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
+	type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'dangerGhost';
 
 	let {
 		variant = 'secondary',
@@ -25,7 +25,8 @@
 		primary: 'bg-accent text-white hover:opacity-90',
 		secondary: 'bg-surface-2 text-ink hover:bg-line',
 		ghost: 'bg-transparent text-ink hover:bg-surface-2',
-		danger: 'bg-danger text-white hover:opacity-90'
+		danger: 'bg-danger text-white hover:opacity-90',
+		dangerGhost: 'bg-transparent text-danger hover:bg-surface-2'
 	};
 	const classes = $derived(
 		`${base} ${variants[variant]} ${disabled ? 'pointer-events-none opacity-50' : ''}`
