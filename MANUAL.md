@@ -58,7 +58,8 @@ Guía sencilla de uso. Para detalles técnicos, ver [`docs/EVAS_ADMIN/`](docs/EV
 3. En la tabla puedes **Renovar** o **Cancelar**. La fecha de vencimiento se calcula sola.
 
 ### 3.5 Montar una instalación (aprovisiona de verdad)
-1. **Instalaciones → “Nueva instalación”**: Cliente, EVA, Versión y **Dominio principal** → **Crear**.
+1. **Instalaciones → “Nueva instalación”**: Cliente, EVA, Versión, configuración de la EVA
+   (si la define, con `*` en los obligatorios) y **Dominio principal** → **Crear**.
    Al elegir el cliente se propone un subdominio corto derivado de su RFC; puedes cambiarlo.
    Para cambiarlo después: **Dominios → Editar**.
 2. Al crearla, la plataforma **crea automáticamente**:

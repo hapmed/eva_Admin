@@ -7,10 +7,15 @@
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import { ApiError, api } from '../../lib/api/client';
 
+	type EvaConfigSchema = {
+		properties?: Record<string, { type?: string }>;
+		required?: string[];
+	};
 	type Eva = {
 		id: string;
 		name: string;
 		versions: { version: string; status: string }[];
+		config_schema?: EvaConfigSchema;
 	};
 	type Client = { id: string; display_name: string; suggested_domain: string | null };
 	type Installation = {
@@ -34,6 +39,7 @@
 	let saving = $state(false);
 	let formError = $state<string | null>(null);
 	let form = $state({ client_id: '', eva_product_id: '', desired_version: '', primary_domain: '' });
+	let configValues = $state<Record<string, string>>({});
 
 	let upgradeFor = $state<Installation | null>(null);
 	let upgradeOpen = $state(false);
@@ -54,6 +60,28 @@
 	const evaName = (id: string) => evas.find((e) => e.id === id)?.name ?? id;
 	const approvedVersions = (evaId: string) =>
 		evas.find((e) => e.id === evaId)?.versions.filter((v) => v.status === 'approved') ?? [];
+
+	const configProperties = $derived.by(() => {
+		const schema = evas.find((item) => item.id === form.eva_product_id)?.config_schema;
+		return Object.entries(schema?.properties ?? {}).map(([key, prop]) => ({
+			key,
+			type: prop.type ?? 'string',
+			required: schema?.required?.includes(key) ?? false
+		}));
+	});
+
+	function resetConfig() {
+		const values: Record<string, string> = {};
+		for (const prop of configProperties) values[prop.key] = '';
+		configValues = values;
+	}
+
+	function openCreate() {
+		form = { client_id: '', eva_product_id: '', desired_version: '', primary_domain: '' };
+		configValues = {};
+		formError = null;
+		showCreate = true;
+	}
 
 	const rows = $derived(
 		installations.map((item) => ({
@@ -82,21 +110,49 @@
 	}
 
 	async function create() {
-		saving = true;
 		formError = null;
+		const missing = configProperties.filter((prop) => prop.required && !configValues[prop.key]);
+		if (missing.length) {
+			formError = `Faltan campos obligatorios: ${missing.map((prop) => prop.key).join(', ')}`;
+			return;
+		}
+
+		saving = true;
 		try {
+			const config: Record<string, unknown> = {};
+			for (const prop of configProperties) {
+				const raw = configValues[prop.key] ?? '';
+				if (raw === '') continue;
+				if (prop.type === 'integer' || prop.type === 'number') {
+					config[prop.key] = Number(raw);
+				} else if (prop.type === 'boolean') {
+					config[prop.key] = raw === 'true';
+				} else if (prop.type === 'array' || prop.type === 'object') {
+					config[prop.key] = JSON.parse(raw);
+				} else {
+					config[prop.key] = raw;
+				}
+			}
+
 			const payload: Record<string, unknown> = {
 				client_id: form.client_id,
 				eva_product_id: form.eva_product_id,
-				desired_version: form.desired_version
+				desired_version: form.desired_version,
+				config
 			};
 			if (form.primary_domain) payload.primary_domain = form.primary_domain;
 			const created = await api.post<Installation>('/installations', payload);
 			installations = [...installations, created];
 			showCreate = false;
 			form = { client_id: '', eva_product_id: '', desired_version: '', primary_domain: '' };
+			configValues = {};
 		} catch (err) {
-			formError = err instanceof ApiError ? err.message : 'Error al crear la instalación';
+			formError =
+				err instanceof ApiError
+					? err.message
+					: err instanceof SyntaxError
+						? 'Configuración JSON inválida'
+						: 'Error al crear la instalación';
 		} finally {
 			saving = false;
 		}
@@ -164,7 +220,7 @@
 
 <PageHeader title="Instalaciones" subtitle="Instancias por cliente">
 	{#snippet actions()}
-		<Button variant="primary" onclick={() => (showCreate = true)}>Nueva instalación</Button>
+		<Button variant="primary" onclick={openCreate}>Nueva instalación</Button>
 	{/snippet}
 </PageHeader>
 
@@ -229,7 +285,7 @@
 		</label>
 		<label class="flex flex-col gap-1">
 			<span>EVA</span>
-			<select class={inputClass} bind:value={form.eva_product_id}>
+			<select class={inputClass} bind:value={form.eva_product_id} onchange={resetConfig}>
 				<option value="">Selecciona…</option>
 				{#each evas as eva (eva.id)}<option value={eva.id}>{eva.name}</option>{/each}
 			</select>
@@ -243,6 +299,37 @@
 				{/each}
 			</select>
 		</label>
+		{#if configProperties.length > 0}
+			<div class="rounded-[12px] border border-line p-3">
+				<p class="mb-2 text-[13px] font-medium">Configuración de la EVA</p>
+				<div class="flex flex-col gap-2">
+					{#each configProperties as prop (prop.key)}
+						<label class="flex flex-col gap-1">
+							<span>
+								{prop.key}{#if prop.required}<span class="text-danger"> *</span>{/if}
+							</span>
+							{#if prop.type === 'boolean'}
+								<select class={inputClass} bind:value={configValues[prop.key]}>
+									<option value="">—</option>
+									<option value="true">Sí</option>
+									<option value="false">No</option>
+								</select>
+							{:else if prop.type === 'object' || prop.type === 'array'}
+								<textarea
+									class={inputClass}
+									rows="2"
+									placeholder="JSON"
+									bind:value={configValues[prop.key]}></textarea>
+							{:else if prop.type === 'integer' || prop.type === 'number'}
+								<input class={inputClass} inputmode="decimal" bind:value={configValues[prop.key]} />
+							{:else}
+								<input class={inputClass} bind:value={configValues[prop.key]} />
+							{/if}
+						</label>
+					{/each}
+				</div>
+			</div>
+		{/if}
 		<label class="flex flex-col gap-1">
 			<span>Dominio principal (opcional)</span>
 			<input
