@@ -1,15 +1,9 @@
 """Usuarios internos de cada app EVA (gestión por acceso directo a la BD).
 
-Convención de la EVA (ver docs/EVAS_APPS/REQUISITOS_EVA.md):
+Soporta dos contratos de tabla:
 
-    tabla `app_users`
-      id            uuid pk
-      email         text unique
-      password_hash text   (bcrypt, prefijo $2)
-      full_name     text
-      role          text
-      is_active     boolean
-      created_at    timestamptz
+- `app_users` (contrato EVAS Admin): id uuid, full_name, role, is_active.
+- `usuario` (EVAs HAPMED Admon): id serial, nombre, rol, activo.
 
 EVAS Admin se conecta a la base del cliente con las credenciales de
 administración del aprovisionamiento (no se guardan credenciales por cliente).
@@ -28,8 +22,6 @@ from app.core.config import get_settings
 from app.models.infrastructure import DatabaseRecord
 from app.services import audit
 from app.services.util import as_uuid
-
-TABLE = "app_users"
 
 
 def hash_password(password: str) -> str:
@@ -59,6 +51,45 @@ def _connect(record: DatabaseRecord) -> psycopg.Connection:
     )
 
 
+def _schema(connection: psycopg.Connection) -> dict[str, str]:
+    row = connection.execute(
+        "SELECT to_regclass('public.app_users'), to_regclass('public.usuario')"
+    ).fetchone()
+    if row and row[0]:
+        return {
+            "table": "app_users",
+            "id_type": "uuid",
+            "select": (
+                "SELECT id, email, full_name, role, is_active, created_at FROM app_users ORDER BY created_at"
+            ),
+            "insert": (
+                "INSERT INTO app_users "
+                "(id, email, password_hash, full_name, role, is_active, created_at) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id"
+            ),
+            "update": "UPDATE app_users SET password_hash = %s WHERE id = %s",
+            "update_email": "UPDATE app_users SET password_hash = %s WHERE lower(email) = lower(%s)",
+            "delete": "DELETE FROM app_users WHERE id = %s",
+        }
+    if row and row[1]:
+        return {
+            "table": "usuario",
+            "id_type": "int",
+            "select": (
+                "SELECT id, email, nombre AS full_name, rol AS role, activo AS is_active, "
+                "created_at FROM usuario ORDER BY created_at"
+            ),
+            "insert": (
+                "INSERT INTO usuario (email, password_hash, nombre, rol, activo) "
+                "VALUES (%s, %s, %s, %s, %s) RETURNING id"
+            ),
+            "update": "UPDATE usuario SET password_hash = %s WHERE id = %s",
+            "update_email": "UPDATE usuario SET password_hash = %s WHERE lower(email) = lower(%s)",
+            "delete": "DELETE FROM usuario WHERE id = %s",
+        }
+    raise ValueError("la EVA no expone una tabla de usuarios compatible")
+
+
 def _row(row) -> dict:
     return {
         "id": str(row[0]),
@@ -72,14 +103,13 @@ def _row(row) -> dict:
 
 def list_users(db: Session, installation_id: str) -> list[dict]:
     record = _record_for_installation(db, installation_id)
-    with _connect(record) as connection, connection.cursor() as cursor:
+    with _connect(record) as connection:
+        info = _schema(connection)
         try:
-            cursor.execute(
-                f"SELECT id, email, full_name, role, is_active, created_at FROM {TABLE} ORDER BY created_at"
-            )
+            rows = connection.execute(info["select"]).fetchall()
         except psycopg.errors.UndefinedTable as exc:
-            raise ValueError("la EVA no expone la tabla 'app_users'") from exc
-        return [_row(row) for row in cursor.fetchall()]
+            raise ValueError("la EVA no expone una tabla de usuarios compatible") from exc
+        return [_row(row) for row in rows]
 
 
 def create_user(
@@ -92,23 +122,41 @@ def create_user(
     role: str,
 ) -> dict:
     record = _record_for_installation(db, installation_id)
-    user_id = uuid.uuid4()
-    with _connect(record) as connection, connection.cursor() as cursor:
+    user_id: str
+    with _connect(record) as connection:
+        info = _schema(connection)
         try:
-            cursor.execute(
-                f"INSERT INTO {TABLE} (id, email, password_hash, full_name, role, is_active, created_at) "
-                f"VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                (str(user_id), email, hash_password(password), full_name, role, True, datetime.now(UTC)),
-            )
+            if info["id_type"] == "uuid":
+                user_id = str(uuid.uuid4())
+                connection.execute(
+                    info["insert"],
+                    (
+                        user_id,
+                        email.lower(),
+                        hash_password(password),
+                        full_name,
+                        role,
+                        True,
+                        datetime.now(UTC),
+                    ),
+                )
+            else:
+                row = connection.execute(
+                    info["insert"],
+                    (email.lower(), hash_password(password), full_name, role, True),
+                ).fetchone()
+                if row is None:
+                    raise RuntimeError("no se pudo crear el usuario")
+                user_id = str(row[0])
         except psycopg.errors.UndefinedTable as exc:
-            raise ValueError("la EVA no expone la tabla 'app_users'") from exc
+            raise ValueError("la EVA no expone una tabla de usuarios compatible") from exc
         except psycopg.errors.UniqueViolation as exc:
             raise ValueError("ya existe un usuario con ese correo") from exc
     audit.record(db, context, "eva_user.create", "installation", installation_id, email=email)
     db.commit()
     return {
-        "id": str(user_id),
-        "email": email,
+        "id": user_id,
+        "email": email.lower(),
         "full_name": full_name,
         "role": role,
         "is_active": True,
@@ -120,21 +168,35 @@ def reset_password(
     db: Session, context: AuthContext, installation_id: str, user_id: str, password: str
 ) -> None:
     record = _record_for_installation(db, installation_id)
-    with _connect(record) as connection, connection.cursor() as cursor:
-        cursor.execute(
-            f"UPDATE {TABLE} SET password_hash = %s WHERE id = %s",
-            (hash_password(password), user_id),
-        )
+    with _connect(record) as connection:
+        info = _schema(connection)
+        id_value = uuid.UUID(user_id) if info["id_type"] == "uuid" else int(user_id)
+        cursor = connection.execute(info["update"], (hash_password(password), id_value))
         if cursor.rowcount == 0:
             raise LookupError("usuario no encontrado")
     audit.record(db, context, "eva_user.reset_password", "installation", installation_id, user_id=user_id)
     db.commit()
 
 
+def reset_password_by_email(
+    db: Session, context: AuthContext, installation_id: str, email: str, password: str
+) -> None:
+    record = _record_for_installation(db, installation_id)
+    with _connect(record) as connection:
+        info = _schema(connection)
+        cursor = connection.execute(info["update_email"], (hash_password(password), email.lower()))
+        if cursor.rowcount == 0:
+            raise LookupError("usuario no encontrado")
+    audit.record(db, context, "eva_user.reset_password", "installation", installation_id, email=email)
+    db.commit()
+
+
 def delete_user(db: Session, context: AuthContext, installation_id: str, user_id: str) -> None:
     record = _record_for_installation(db, installation_id)
-    with _connect(record) as connection, connection.cursor() as cursor:
-        cursor.execute(f"DELETE FROM {TABLE} WHERE id = %s", (user_id,))
+    with _connect(record) as connection:
+        info = _schema(connection)
+        id_value = uuid.UUID(user_id) if info["id_type"] == "uuid" else int(user_id)
+        cursor = connection.execute(info["delete"], (id_value,))
         if cursor.rowcount == 0:
             raise LookupError("usuario no encontrado")
     audit.record(db, context, "eva_user.delete", "installation", installation_id, user_id=user_id)

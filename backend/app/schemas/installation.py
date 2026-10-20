@@ -70,6 +70,11 @@ class InstallationOut(BaseModel):
     secrets: list[SecretRefOut]
 
 
+class InstallationAccessOut(BaseModel):
+    email: str | None
+    password: str | None
+
+
 class InstallationDeleteOut(BaseModel):
     id: str
     deleted: bool

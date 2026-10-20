@@ -90,6 +90,10 @@
 ## 8. Gestión de secretos
 
 - Secretos por **variables de entorno** o gestor de secretos documentado.
+- **Excepción controlada:** las credenciales del administrador de cada EVA se
+  guardan cifradas (Fernet) y se devuelven solo a usuarios con
+  `installations:write` para poder entregarlas al cliente. La creación y la
+  regeneración de contraseñas se auditan; el acceso se sirve por HTTPS.
 - `.env` fuera de Git; `.env.example` con valores **ficticios**.
 - Nunca registrar contraseñas, tokens, cookies ni cadenas de conexión.
 - Los datos de negocio de clientes usan **referencias** a secretos

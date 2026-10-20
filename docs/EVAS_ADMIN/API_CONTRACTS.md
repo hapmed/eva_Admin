@@ -149,6 +149,9 @@ suscripción incluyen el cálculo de tiempo (fechas en UTC):
 | GET | `/installations/{id}` | `installations:read` |
 | PATCH | `/installations/{id}` | `installations:write` |
 | DELETE | `/installations/{id}` | `installations:write` |
+| GET | `/installations/{id}/access` | `installations:write` |
+| POST | `/installations/{id}/access` | `installations:write` |
+| POST | `/installations/{id}/access/reset` | `installations:write` |
 | GET | `/installations/{id}/services` | `installations:read` |
 | GET | `/installations/{id}/health` | `installations:read` |
 | POST | `/installations/{id}/restart` | `installations:operate` |
@@ -159,6 +162,11 @@ suscripción incluyen el cálculo de tiempo (fechas en UTC):
 datos y los registros de la instalación. El cliente se conserva. Si el
 contenedor no se puede eliminar, la operación se aborta sin borrar registros;
 los fallos de DNS o base de datos se devuelven en `warnings`.
+
+`GET /installations/{id}/access` devuelve las credenciales de administrador de
+la EVA (`email`, `password`), almacenadas cifradas. `POST` las crea si faltan y
+`POST /access/reset` genera una contraseña nueva. Requieren
+`installations:write`; creación y regeneración quedan auditadas.
 
 **Ejemplo — crear instalación (`POST /installations`)**
 

@@ -8,8 +8,10 @@ from app.api.errors import http_error
 from app.api.serializers import installation_out, operation_out, service_out
 from app.core.rate_limit import rate_limit
 from app.db.session import get_db
+from app.models.client import Client
 from app.schemas.eva_user import EvaUserCreate, EvaUserOut, EvaUserReset
 from app.schemas.installation import (
+    InstallationAccessOut,
     InstallationCreate,
     InstallationDeleteOut,
     InstallationOut,
@@ -20,7 +22,7 @@ from app.schemas.installation import (
     UpgradeRequest,
 )
 from app.schemas.monitoring import LogsOut, MetricsOut
-from app.services import eva_users, installation_service, monitoring_service
+from app.services import access_service, eva_users, installation_service, monitoring_service
 
 router = APIRouter()
 
@@ -91,6 +93,47 @@ def delete_installation(
 ) -> dict:
     try:
         return installation_service.delete_installation(db, context, installation_id)
+    except (ValueError, LookupError) as exc:
+        raise http_error(exc) from exc
+
+
+@router.get("/{installation_id}/access", response_model=InstallationAccessOut)
+def get_installation_access(
+    installation_id: str,
+    _: AuthContext = Depends(require_permission("installations:write")),
+    db: Session = Depends(get_db),
+) -> dict:
+    try:
+        installation_service.get_installation(db, installation_id)
+        return access_service.get_access(db, installation_id)
+    except (ValueError, LookupError) as exc:
+        raise http_error(exc) from exc
+
+
+@router.post("/{installation_id}/access", response_model=InstallationAccessOut, status_code=201)
+def create_installation_access(
+    installation_id: str,
+    context: AuthContext = Depends(require_permission("installations:write")),
+    db: Session = Depends(get_db),
+) -> dict:
+    try:
+        installation = installation_service.get_installation(db, installation_id)
+        client = db.get(Client, installation.client_id)
+        if client is None:
+            raise LookupError("cliente no encontrado")
+        return access_service.ensure_access(db, context, installation, client)
+    except (ValueError, LookupError) as exc:
+        raise http_error(exc) from exc
+
+
+@router.post("/{installation_id}/access/reset", response_model=InstallationAccessOut)
+def reset_installation_access(
+    installation_id: str,
+    context: AuthContext = Depends(require_permission("installations:write")),
+    db: Session = Depends(get_db),
+) -> dict:
+    try:
+        return access_service.reset_access(db, context, installation_id)
     except (ValueError, LookupError) as exc:
         raise http_error(exc) from exc
 

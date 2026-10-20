@@ -1,5 +1,6 @@
 """Lógica de instalaciones (aprovisionamiento real: BD + contenedor + DNS)."""
 
+import logging
 from datetime import UTC, datetime
 
 from sqlalchemy import delete, select
@@ -23,6 +24,7 @@ from app.models.infrastructure import (
 from app.models.monitoring import Backup, HealthCheck, Metric
 from app.schemas.installation import InstallationCreate, InstallationUpdate
 from app.services import (
+    access_service,
     audit,
     client_service,
     cloudflare,
@@ -35,6 +37,8 @@ from app.services import (
     subscription_service,
 )
 from app.services.util import as_uuid
+
+logger = logging.getLogger(__name__)
 
 
 def _resolve_node(db: Session, node_id: str | None) -> Node | None:
@@ -220,7 +224,7 @@ def create_installation(db: Session, context: AuthContext, data: InstallationCre
     labels = _service_labels(eva, installation, str(client.id), data.desired_version)
     spec = _deploy_spec(eva, installation, data.desired_version, env, labels)
 
-    operations.run(
+    operation = operations.run(
         db,
         context,
         str(installation.id),
@@ -229,6 +233,12 @@ def create_installation(db: Session, context: AuthContext, data: InstallationCre
         call=lambda agent: agent.deploy_installation(spec),
         summary="despliegue inicial",
     )
+
+    if operation.status != "succeeded":
+        installation.status = "failed"
+        installation.last_operation_at = datetime.now(UTC)
+        db.commit()
+        raise ValueError("el despliegue de la EVA falló; revisa las operaciones")
 
     if settings.provision_enabled and data.primary_domain and installation.host_port:
         try:
@@ -241,6 +251,13 @@ def create_installation(db: Session, context: AuthContext, data: InstallationCre
     installation.last_operation_at = datetime.now(UTC)
     db.commit()
     db.refresh(installation)
+
+    try:
+        access_service.ensure_access(db, context, installation, client)
+    except Exception:  # noqa: BLE001 - las credenciales se pueden crear luego
+        db.rollback()
+        logger.warning("no se pudieron crear las credenciales iniciales de la instalación")
+
     return installation
 
 

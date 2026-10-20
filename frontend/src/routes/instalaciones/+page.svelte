@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import Button from '#lib/components/Button.svelte';
 	import DataTable from '#lib/components/DataTable.svelte';
+	import EvaAccessModal from '#lib/components/EvaAccessModal.svelte';
 	import EvaUsersModal from '#lib/components/EvaUsersModal.svelte';
 	import Modal from '#lib/components/Modal.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
@@ -45,6 +46,8 @@
 	let upgradeOpen = $state(false);
 	let usersFor = $state<Installation | null>(null);
 	let usersOpen = $state(false);
+	let accessFor = $state<Installation | null>(null);
+	let accessOpen = $state(false);
 	let upgradeVersion = $state('');
 
 	let deleteFor = $state<Installation | null>(null);
@@ -255,6 +258,15 @@
 					<Button
 						variant="ghost"
 						onclick={() => {
+							accessFor = row as Installation;
+							accessOpen = true;
+						}}
+					>
+						Acceso
+					</Button>
+					<Button
+						variant="ghost"
+						onclick={() => {
 							usersFor = row as Installation;
 							usersOpen = true;
 						}}
@@ -406,4 +418,5 @@
 	{/snippet}
 </Modal>
 
+<EvaAccessModal bind:open={accessOpen} installation={accessFor} />
 <EvaUsersModal bind:open={usersOpen} installation={usersFor} />

@@ -103,6 +103,34 @@ def test_delete_installation_removes_resources_and_keeps_client(auth_client):
     assert any(item["id"] == client["id"] for item in clients)
 
 
+def test_installation_access_can_be_created_and_reset(auth_client, monkeypatch):
+    client = make_client(auth_client, "Acceso")
+    eva = make_eva(auth_client, code="acceso")
+    installation = make_installation(
+        auth_client, client["id"], eva["id"], primary_domain="acceso.ejemplo.test"
+    ).json()
+
+    initial = auth_client.get(f"/api/v1/installations/{installation['id']}/access")
+    assert initial.status_code == 200
+    assert initial.json() == {"email": None, "password": None}
+
+    monkeypatch.setattr("app.services.eva_users.create_user", lambda *args, **kwargs: {"id": "1"})
+    created = auth_client.post(f"/api/v1/installations/{installation['id']}/access")
+    assert created.status_code == 201, created.text
+    body = created.json()
+    assert body["email"] == "admin@acceso.ejemplo.test"
+    assert body["password"]
+
+    current = auth_client.get(f"/api/v1/installations/{installation['id']}/access")
+    assert current.json() == body
+
+    monkeypatch.setattr("app.services.eva_users.reset_password_by_email", lambda *args, **kwargs: None)
+    reset = auth_client.post(f"/api/v1/installations/{installation['id']}/access/reset")
+    assert reset.status_code == 200, reset.text
+    assert reset.json()["email"] == body["email"]
+    assert reset.json()["password"] != body["password"]
+
+
 def test_delete_installation_requires_permission(db_session, client):
     make_user(db_session, "viewer5@hapmed.test", "viewer-password", ["read_only"])
     authenticate(client, "viewer5@hapmed.test", "viewer-password")

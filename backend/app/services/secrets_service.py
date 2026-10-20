@@ -50,6 +50,41 @@ def get_or_create_value(db: Session, installation_id, key: str) -> str:
     return value
 
 
+def set_value(db: Session, installation_id, key: str, value: str) -> None:
+    """Guarda (cifrado) un valor concreto para una instalación."""
+    row = db.scalar(
+        select(InstallationSecret).where(
+            InstallationSecret.installation_id == as_uuid(installation_id),
+            InstallationSecret.key == key,
+        )
+    )
+    encrypted = _fernet().encrypt(value.encode("utf-8")).decode("utf-8")
+    if row is not None:
+        row.value_encrypted = encrypted
+    else:
+        db.add(
+            InstallationSecret(
+                installation_id=as_uuid(installation_id),
+                key=key,
+                value_encrypted=encrypted,
+            )
+        )
+    db.flush()
+
+
+def get_value(db: Session, installation_id, key: str) -> str | None:
+    """Recupera un valor cifrado, o None si no existe."""
+    row = db.scalar(
+        select(InstallationSecret).where(
+            InstallationSecret.installation_id == as_uuid(installation_id),
+            InstallationSecret.key == key,
+        )
+    )
+    if row is None:
+        return None
+    return _fernet().decrypt(row.value_encrypted.encode("utf-8")).decode("utf-8")
+
+
 def env_for(db: Session, installation_id) -> dict[str, str]:
     """Devuelve {KEY: valor} para todos los secretos declarados en la instalación."""
     references = db.scalars(
