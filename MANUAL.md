@@ -77,6 +77,15 @@ Guía sencilla de uso. Para detalles técnicos, ver [`docs/EVAS_ADMIN/`](docs/EV
 > El **catálogo EVA** debe tener `Imagen Docker`, `Puerto interno` y `Ruta de salud`
 > (se definen al crear la EVA).
 
+### 3.5.1 Usuarios de cada EVA
+1. **Administración → Usuarios EVA**.
+2. Lista global de usuarios por cliente, EVA y dominio; puedes filtrar por cliente,
+   instalación o buscar por correo/nombre.
+3. Acciones por usuario: **Abrir EVA**, **Restablecer** contraseña y **Eliminar**.
+4. **Nuevo usuario**: eliges instalación, correo, nombre, contraseña y rol. Al crearlo se
+   muestran las credenciales para copiarlas y compartirlas.
+   > En HAPMED Admon los roles son `admin`, `ventas` y `consulta`.
+
 ### 3.6 Renovar / cancelar una suscripción
 1. **Suscripciones**: en la fila pulsa **Renovar** o **Cancelar**.
 

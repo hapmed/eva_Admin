@@ -11,6 +11,7 @@ import {
 	ScrollText,
 	Server,
 	Users,
+	UsersRound,
 	UserCog
 } from '@lucide/svelte';
 
@@ -40,6 +41,7 @@ export const navGroups: NavGroup[] = [
 	{
 		label: 'Administración',
 		items: [
+			{ href: '/usuarios-eva', label: 'Usuarios EVA', icon: UsersRound },
 			{ href: '/usuarios', label: 'Usuarios internos', icon: Users },
 			{ href: '/auditoria', label: 'Auditoría', icon: ScrollText },
 			{ href: '/cuenta', label: 'Cuenta', icon: UserCog }
